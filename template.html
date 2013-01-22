@@ -130,7 +130,7 @@
 <script src="http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
 var appname = 'ushahidi';
-var answer = [];
+var answer = {};
 var sub_ballot_plus_results = ['provisional results',
                            'ballot box stuffing',
                            'tampering with ballot box',
@@ -608,19 +608,72 @@ function show_sub_categories(selected) {
         }
         else {
             $("#sub-categories").hide();
+            add_cat_subcat();
         }
     }
 }
 
 function add_cat_subcat() {
-    var id = answer.length;
-    var cat = $(this).children(":selected").html();
-    var sub_cat = $(this).children(":selected").html();
-    var span = $("<span/>", {
-        'id': id,
+    var cat = $("select#category").children(":selected").html();
+    var sub_cat = $("select#sub-categories").children(":selected").html();
+    var p = $("<p/>");
+    var btn = $("<button/>", {html:"<i class='icon-trash'></i> ", "class":"btn btn-small btn-dal"});
+    var span = $("<span/>");
+    if ((cat !="Select a category...") && (sub_cat)) {
+        var id = cat + "QQQ" + sub_cat;
+        p.attr('id', id);
+        btn.attr('id', id);
+        p.append(btn);
+        span.html(" " + cat + " &rarr; " + sub_cat ); 
+        p.append(span);
+    }
+    else {
+        var id = cat + "QQQ";
+        p.attr('id', id);
+        btn.attr('id', id);
+        p.append(btn);
+        span.html(" " + cat); 
+        p.append(span);
+    }
+    $("#answers").append(p);
+    btn.click(function(){
+        var item = ($(this).attr('id')).split("QQQ");
+        if (item.length == 2) {
+            var cat = item[0];
+            var sub_cat = item[1];
+
+            var idx = answer[cat]['sub-categories'].indexOf(sub_cat);
+            answer[cat]['sub-categories'].pop(idx);
+            if (answer[cat]['sub-categories'].length == 0) {
+                delete answer[cat];
+            }
+        }
+        else {
+            var cat = item[0]
+            delete answer[cat];
+        }
+        console.log(answer);
+        var id = "p#" + $(this).attr('id');
+        console.log(id);
+       $(id).remove();
+       $(this).parent().remove();
+       console.log(answer);
     });
-    span.html(cat + " " + sub_cat); 
-    answer.push({cat, sub_cat});
+    if (cat in answer) {
+        if (cat != 'urgent') {
+            if ( sub_cat in answer[cat]['sub-categories'] ) {
+            }
+            else {
+                answer[cat]['sub-categories'].push(sub_cat);
+            }
+        }
+    }
+    else {
+        answer[cat]={'sub-categories':[]};
+        if (sub_cat) {
+            answer[cat]['sub-categories'].push(sub_cat);
+        }
+    }
 }
 
 pybossa.presentTask(function(task, deferred){
@@ -644,9 +697,9 @@ pybossa.presentTask(function(task, deferred){
                 show_sub_categories(cat);
             });
             // Add category and sub-category to the possible answers list
-            $("select#sub-category").change(function(){
+            $("select#sub-categories").change(function(){
                 var sub_cat = $(this).children(":selected").html();
-                add_answer(sub_cat);
+                add_cat_subcat();
             });
 
         }
