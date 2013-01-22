@@ -50,80 +50,110 @@
 <div class="row skeleton">
   <div id="question" class="span12">
       <h1>Question</h1>
-      <div class="row">
-          <div class="span8">
-              <div id="incident" class="well well-small">
-                  <h2 id="title"> </h2>
-                  <i class="icon-time"></i> <span id="date"></span>
-                  <p id="description">Loading incident...</p>
-              </div>
-              <div id="categories">
-                    <select id="category">
-                    <option>Select a category...</option>
-                    <option>ballot + results</option>
-                    <option>dangerous speech</option>
-                    <option>leadership</option>
-                    <option>polling station issues</option>
-                    <option>possitive events</option>
-                    <option>pre-election</option>
-                    <option>security</option>
-                    <option>urgent</option>
-                    </select>
-                    <select id="sub-categories" style="display:none">
-                    </select>
-              </div>
-              <div id="answers">
-              </div>
-              <div>
-                  <hr>
-                  <input id=""  type="text" placeholder="Paste link to picture of damage/impact here" style="display:none; width:395px;">
-                  <input id="videoLink"  type="text" placeholder="Paste link to video of damage/impact here" style="display:none; width:395px;">
-                  <input id="locationRef" type="text" placeholder="Paste reference to location, place, town, etc. here and click &rarr;" style="display:none; width:395px;">
-                  <button id="searchBtn" onclick="search()" class="btn" style="display:none; margin-top:-10px"><i class="icon-search"></i> Search</button>
-                  <hr>
-              </div>
-              <div id="geocoding">
+  </div>
+</div>
+
+<div class="row skeleton">
+  <div class="span7">
+      <div id="incident" class="well well-small">
+          <h2 id="title"> </h2>
+          <i class="icon-time"></i> <span id="date"></span>
+          <p id="description">Loading incident...</p>
+      </div>
+  </div>
+  <div class="span3 well well-small">
+    <p>You are working now on task: <span id="task-id" class="label label-warning">#</span></p>
+    <p>You have completed: <span id="done" class="label label-info"></span> reports from
+    <span id="total" class="label label-inverse"></span></p>
+    <div class="progress progress-striped">
+        <div id="progress" rel="tooltip" title="#" class="bar" style="width: 0%;"></div>
+    </div>
+    <div style="padding-top:5px; text-align:center;"><a class="btn btn-primary" href="../tutorial"><i class="icon-question-sign"></i> Tutorial</a>
+    </div>
+  </div>
+</div>
+
+<div id="step1" class="row skeleton">
+    <div class="span12">
+      <div id="categories">
+          <hr>
+          <h3>Step 1: Categorize the report <small>add as many categories as you need</small></h3>
+          <select id="category">
+            <option>Select a category...</option>
+            <option>ballot + results</option>
+            <option>dangerous speech</option>
+            <option>leadership</option>
+            <option>polling station issues</option>
+            <option>possitive events</option>
+            <option>pre-election</option>
+            <option>security</option>
+            <option>urgent</option>
+          </select>
+          <select id="sub-categories" style="display:none"></select>
+      </div>
+      <div id="answers"></div>
+      <button id="catBtn" class="btn btn-primary" style="display:none">Done! Go to Step 2</button>
+  </div>
+</div>
+
+<div id="step2" class="row skeleton" style="display:none">
+    <div class="span12">
+        <h3>Step 2: Place the report in the map</h3>
+        <div class="row">
+            <div class="span8">
+                <div id="geocoding"></div>
+
+            </div>
+            <div class="span4">
+                <div class="input-append">
+                    <input id="locationRef" class="span4" type="text" placeholder="Paste reference to location, place, town, etc. here and click &rarr;">
+                    <button class="btn" type="button" id="searchBtn" onclick="search()"><i class="icon-search"></i> Search!</button>
                 </div>
-                <div id="coordinates">
-                    <i class="icon-map-marker"></i> Approximate damage/impact location: <strong> Longitude:</strong> <span id="lon"></span>, 
-                    <strong>Latitude:</strong> <span id="lat"></span>
-                </div>
-                <br/>
-                <div id="controls" class="btn-group" data-toggle="buttons-checkbox">
+                <div id="controls" class="btn-group" data-toggle="buttons-checkbox" style="margin-top:5px;">
                     <button id="navigate" class="btn btn-inverse active" onClick="toggleControl('navigate');">
                         <i class="icon icon-white icon-move"></i> Navigate
                     </button>
                     <button id="point"    class="btn btn-inverse" onClick="toggleControl('point');">
-                        <i class="icon icon-white icon-map-marker"></i> Add damage/impact marker 
+                        <i class="icon icon-white icon-map-marker"></i> Add a marker 
                     </button>
                 </div>
-              </div>
-              <div style="padding-top:5px;">
-                <button class="btn btn-success" onclick="submitTask()"><i class="icon-thumbs-up"></i> Submit classification</button>
-              </div>
-          </div>
-          <div class="span3 well well-small">
-            <p>You are working now on task: <span id="task-id" class="label label-warning">#</span></p>
-            <p>You have completed: <span id="done" class="label label-info"></span> tweets from
-            <span id="total" class="label label-inverse"></span></p>
-            <div class="progress progress-striped">
-                <div id="progress" rel="tooltip" title="#" class="bar" style="width: 0%;"></div>
+                <div id="coordinates" style="font-size: 14px; padding-top:5px;">
+                    <i class="icon-map-marker"></i> Approximate location:
+                        <ul>
+                            <li><strong>Longitude:</strong> <span id="lon"></span></li>
+                            <li><strong>Latitude:</strong> <span id="lat"></span></li>
+                        </ul>
+                </div>
+                <div id="searching" class="alert alert-info" style="display:none">
+                    <strong>Searching...</strong>
+                </div>
+                <div id="searchingDone" class="alert alert-success" style="display:none">
+                    <strong>Location found!</strong>
+                </div>
+                <div id="searchingError" class="alert alert-warning" style="display:none;margin-top:5px;">
+                    <strong>Oops! Location not found</strong> Please add the marker yourself
+                </div>
             </div>
-            <span class="label label-warning"><i class="icon-bullhorn"></i> Tip</span> If you need help, check the 
-            <div style="padding-top:5px; text-align:center;"><a class="btn btn-primary" href="../tutorial"><i class="icon-question-sign"></i> Tutorial</a>
+        </div>
+        <button id="geoBtn" class="btn btn-primary" style="margin-top:5px;display:none">Done! Review and submit task</button>
+    </div>
+</div>
+
+<div id="step3" class="row skeleton" style="display:none">
+    <div class="span12">
+        <h2>Send this classification!</h2>
+        <div class="row">
+            <div class="span6">
+                <h3>Categories</h3>
+                <ul id="review" style="font-size:14px;">
             </div>
-          </div>
-          <div id="searching" class="alert alert-info span2" style="display:none">
-            <strong>Searching...</strong>
-          </div>
-          <div id="searchingDone" class="alert alert-success span2" style="display:none">
-            <strong>Location found!</strong>
-          </div>
-          <div id="searchingError" class="alert alert-warning span2" style="display:none">
-            <strong>Oops! Location not found</strong> Please add the marker yourself
-          </div>
-      </div>
-  </div>
+            <div id="reviewLoc" class="span6">
+                <h3>Location</h3>
+            </div>
+        </div>
+        </ul>
+        <button id="btnSubmit" class="btn btn-primary">Perfect! Submit the work</button>
+    </div>
 </div>
 
 <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
@@ -131,6 +161,8 @@
 <script>
 var appname = 'ushahidi';
 var answer = {};
+var loc = {};
+var map;
 var sub_ballot_plus_results = ['provisional results',
                            'ballot box stuffing',
                            'tampering with ballot box',
@@ -236,16 +268,16 @@ function toggleControl(control) {
     }
 }
 //
-//// If user presses enter do the search
-//$("#locationRef").bind('keypress', function(e){
-//    var code = (e.keyCode ? e.keyCode : e.which);
-//    if(code == 13) { //Enter keycode
-//        search();
-//    }
-//});
-//
+// If user presses enter do the search
+$("#locationRef").bind('keypress', function(e){
+    var code = (e.keyCode ? e.keyCode : e.which);
+    if(code == 13) { //Enter keycode
+        search();
+    }
+});
+
 // This function will load the marker of the city, and center the map on it
-function search(map, city) {
+function search(city) {
     if (city) {
         var place = city;
         $("#searchingError").hide();
@@ -284,9 +316,9 @@ function search(map, city) {
                 );
             // Set the marker position
             point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
-            cityLayer.addFeatures([new OpenLayers.Feature.Vector(point)]);
+            //cityLayer.addFeatures([new OpenLayers.Feature.Vector(point)]);
             // Center the map
-            map.setCenter(lonLat,4);
+            map.setCenter(lonLat,5);
             //lonLat.transform(
             //        map.getProjectionObject(), // from Spherical Mercator Projection
             //        new OpenLayers.Projection("EPSG:4326") // to transform from WGS 1984
@@ -309,37 +341,33 @@ function search(map, city) {
         }
     });
 }
-//
-//initialize();
-//search("kenya");
-//
-//// See http://stackoverflow.com/questions/37684/how-to-replace-plain-urls-with-links 
-//// for more details on this function
+// See http://stackoverflow.com/questions/37684/how-to-replace-plain-urls-with-links 
+// for more details on this function
 function replaceURLWithHTMLLinks(text) {
     var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
     return text.replace(exp,"<a target='_blank' href='$1'>$1</a>"); 
 }
-//
-//$("#location").click(
-//    function() {
-//    if ($("#locationRef").is(":visible")) {
-//        $("#locationRef").hide();
-//        $("#geocoding").hide();
-//        $("#searchBtn").hide();
-//    }
-//    else {
-//        $("#locationRef").show();
-//        $("#geocoding").show();
-//        $("#searchBtn").show();
-//        // ScrollTo this element
-//        // See this for further details http://stackoverflow.com/questions/6677035/jquery-scroll-to-element
-//        $('html, body').animate({
-//                 scrollTop: $("#locationRef").offset().top - 200
-//             }, 2000);
-//    }
-//}
-//);
-//
+
+$("#location").click(
+    function() {
+    if ($("#locationRef").is(":visible")) {
+        $("#locationRef").hide();
+        $("#geocoding").hide();
+        $("#searchBtn").hide();
+    }
+    else {
+        $("#locationRef").show();
+        $("#geocoding").show();
+        $("#searchBtn").show();
+        // ScrollTo this element
+        // See this for further details http://stackoverflow.com/questions/6677035/jquery-scroll-to-element
+        $('html, body').animate({
+                 scrollTop: $("#locationRef").offset().top - 200
+             }, 2000);
+    }
+}
+);
+
 function loadUserProgress() {
     pybossa.userProgress(appname).done(function(data){
         var pct = Math.round((data.done*100)/data.total);
@@ -422,15 +450,6 @@ function submitTask() {
         return;
     }
 
-    var answer = {picture:picture, 
-                  video:video, 
-                  location:location, 
-                  other:other, 
-                  videoLink: videoLink,
-                  pictureLink: pictureLink,
-                  locationRef: locationRef,
-                  loc: loc,
-    };
     // Save the task
     pybossa.saveTask(taskid, answer).done( function( data ) {
         // Uncoment next line for debugging purposes
@@ -444,27 +463,6 @@ function submitTask() {
     });
 }
 
-// Check if the user is loading directly a task or requesting a new one
-//var taskId = pybossa.getCurrentTaskId(window.location.pathname);
-//
-//if (taskId){
-//    // The user is loading directly a task, so load then input data
-//    loadTask(taskId);
-//}
-//else {
-//    // The user is requesting a new task, so get a new one
-//    pybossa.newTask(appname).done( function( data ) { 
-//
-//        if ( !$.isEmptyObject(data.task) ) {
-//            window.location.pathname = "/app/" + appname + "/task/" + data.task.id;
-//        }
-//        else {
-//            $(".skeleton").hide();
-//            $("#finish").fadeIn();
-//        }
-//    });
-//}
-
 pybossa.taskLoaded(function(task, deferred){
         if ( !$.isEmptyObject(task) ) {
             var map_canvas = $("<div/>", {
@@ -474,7 +472,7 @@ pybossa.taskLoaded(function(task, deferred){
             map_canvas.css('height', 310);
             $("#geocoding").html('').append(map_canvas);
 
-        var map = new OpenLayers.Map('map_canvas', {
+        map = new OpenLayers.Map('map_canvas', {
             controls: [
                 new OpenLayers.Control.Navigation(),
                 new OpenLayers.Control.PanZoom(),
@@ -512,7 +510,7 @@ pybossa.taskLoaded(function(task, deferred){
         // Icon for the typhoon/tornado Marker 
         var styleDamage = new OpenLayers.StyleMap({
             pointRadius: 15,
-            externalGraphic: 'http://i.imgur.com/D6W1h.png'
+            externalGraphic: 'http://i.imgur.com/Xphjbp1.png'
         });
 
         // Layer for placing the city marker
@@ -533,10 +531,7 @@ pybossa.taskLoaded(function(task, deferred){
         // The function gets the feature (point) and gets its location, transforms it to the right projection
         // loads the lon and at into the HTML skeleton and disables the toolbar, so no more points can be added
         disablePoint = function(feature) { 
-            if ($("#answerbtn").hasClass("disabled")) {
-                $("#answerbtn").removeClass('disabled');
-                $("#answerbtn").click(submitTask);
-            }
+            $("#geoBtn").show();
 
             $("#lat").text(feature.geometry.y);
             var tmp = feature.geometry.clone();
@@ -546,6 +541,7 @@ pybossa.taskLoaded(function(task, deferred){
             );
             $("#lon").text(tmp.x);       
             $("#lat").text(tmp.y);       
+            loc = {"lon":tmp.x, "lat":tmp.y};
             toggleControl('point');
         }
 
@@ -568,6 +564,7 @@ pybossa.taskLoaded(function(task, deferred){
                 // When the marker has been dropped, update the lon & lat of the urban park
                 $("#lon").text(tmp.x);       
                 $("#lat").text(tmp.y);       
+                loc = {"lon":tmp.x, "lat":tmp.y};
             }
         
         });
@@ -586,7 +583,7 @@ pybossa.taskLoaded(function(task, deferred){
             map.addControl(drawControls[key]);
         }
         task.map = map_canvas;
-        search(map, 'kenya');
+        search('kenya');
         deferred.resolve(task);
         }
         else {
@@ -635,7 +632,9 @@ function remove_cat_subcat(){
        $(id).remove();
        $(this).parent().remove();
        console.log(answer);
-
+       if (Object.keys(answer).length == 0) {
+           $("#catBtn").hide();
+       }
 }
 
 function add_cat_subcat() {
@@ -668,6 +667,13 @@ function add_cat_subcat() {
     }
 
     if ( add_item ) {
+        if (!($("#catBtn").is(":visible"))) {
+            $("#catBtn").show();
+            $("#catBtn").click(function(){
+                $("#step1").hide();
+                $("#step2").show();
+            });
+        }
         if ((cat !="Select a category...") && (sub_cat)) {
             var id = cat + "QQQ" + sub_cat;
             p.attr('id', id);
@@ -714,6 +720,28 @@ pybossa.presentTask(function(task, deferred){
             $("select#sub-categories").change(function(){
                 var sub_cat = $(this).children(":selected").html();
                 add_cat_subcat();
+            });
+
+            $("#geoBtn").click(function(){
+                $("#step2").hide();
+                $("#step3").show();
+                for(var cat in answer) {
+                    var li = $("<li/>", {id:cat, text:cat});
+                    $("#review").append(li);
+                    var l = answer[cat]['sub-categories'].length;
+                    if ( l > 0) {
+                        var ul = $("<ul/>");
+                        for(i=0;i<l;i++) {
+                            ul.append("<li>" + answer[cat]['sub-categories'][i] +"</li>");
+                        }
+                        li.append(ul);
+                    }
+                }
+
+                if (Object.keys(loc).length > 0) {
+                    $("#reviewLoc").append("<p><strong>Incident Latitude:</strong> " + loc['lat'] + "</p>");
+                    $("#reviewLoc").append("<p><strong>Incident Longitude: </strong>" + loc['lat'] + "</p>");
+                }
             });
 
         }
