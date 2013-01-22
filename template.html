@@ -72,6 +72,8 @@
                     <select id="sub-categories" style="display:none">
                     </select>
               </div>
+              <div id="answers">
+              </div>
               <div>
                   <hr>
                   <input id=""  type="text" placeholder="Paste link to picture of damage/impact here" style="display:none; width:395px;">
@@ -128,6 +130,7 @@
 <script src="http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
 var appname = 'ushahidi';
+var answer = [];
 var sub_ballot_plus_results = ['provisional results',
                            'ballot box stuffing',
                            'tampering with ballot box',
@@ -602,12 +605,22 @@ function show_sub_categories(selected) {
                 select.append('<option>' + categories[selected]['sub-categories'][i] + '</option>');
             }
             $("#sub-categories").show();
-            //$("#categories").append(select);
         }
         else {
             $("#sub-categories").hide();
         }
     }
+}
+
+function add_cat_subcat() {
+    var id = answer.length;
+    var cat = $(this).children(":selected").html();
+    var sub_cat = $(this).children(":selected").html();
+    var span = $("<span/>", {
+        'id': id,
+    });
+    span.html(cat + " " + sub_cat); 
+    answer.push({cat, sub_cat});
 }
 
 pybossa.presentTask(function(task, deferred){
@@ -630,6 +643,12 @@ pybossa.presentTask(function(task, deferred){
                 var cat = $(this).children(":selected").html();
                 show_sub_categories(cat);
             });
+            // Add category and sub-category to the possible answers list
+            $("select#sub-category").change(function(){
+                var sub_cat = $(this).children(":selected").html();
+                add_answer(sub_cat);
+            });
+
         }
         else {
             $(".skeleton").hide();
