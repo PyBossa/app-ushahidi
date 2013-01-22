@@ -613,30 +613,7 @@ function show_sub_categories(selected) {
     }
 }
 
-function add_cat_subcat() {
-    var cat = $("select#category").children(":selected").html();
-    var sub_cat = $("select#sub-categories").children(":selected").html();
-    var p = $("<p/>");
-    var btn = $("<button/>", {html:"<i class='icon-trash'></i> ", "class":"btn btn-small btn-dal"});
-    var span = $("<span/>");
-    if ((cat !="Select a category...") && (sub_cat)) {
-        var id = cat + "QQQ" + sub_cat;
-        p.attr('id', id);
-        btn.attr('id', id);
-        p.append(btn);
-        span.html(" " + cat + " &rarr; " + sub_cat ); 
-        p.append(span);
-    }
-    else {
-        var id = cat + "QQQ";
-        p.attr('id', id);
-        btn.attr('id', id);
-        p.append(btn);
-        span.html(" " + cat); 
-        p.append(span);
-    }
-    $("#answers").append(p);
-    btn.click(function(){
+function remove_cat_subcat(){
         var item = ($(this).attr('id')).split("QQQ");
         if (item.length == 2) {
             var cat = item[0];
@@ -658,22 +635,59 @@ function add_cat_subcat() {
        $(id).remove();
        $(this).parent().remove();
        console.log(answer);
-    });
-    if (cat in answer) {
-        if (cat != 'urgent') {
-            if ( sub_cat in answer[cat]['sub-categories'] ) {
+
+}
+
+function add_cat_subcat() {
+    var cat = $("select#category").children(":selected").html();
+    var sub_cat = $("select#sub-categories").children(":selected").html();
+    var p = $("<p/>");
+    var btn = $("<button/>", {html:"<i class='icon-trash'></i> ", "class":"btn btn-small btn-dal"});
+    var span = $("<span/>");
+    var add_item = false;
+
+    if (cat !="Select a category...") {
+        if (cat == 'urgent') { 
+            if ( !(cat in answer) ) {
+                answer[cat]={'sub-categories': []};
+                add_item = true;
+            }
+        }
+        else {
+            if (cat in answer) {
+                if ( answer[cat]['sub-categories'].indexOf(sub_cat) == -1 ) {
+                    answer[cat]['sub-categories'].push(sub_cat);
+                    add_item = true;
+                }
             }
             else {
-                answer[cat]['sub-categories'].push(sub_cat);
+                answer[cat]={'sub-categories': [sub_cat]};
+                add_item = true;
             }
         }
     }
-    else {
-        answer[cat]={'sub-categories':[]};
-        if (sub_cat) {
-            answer[cat]['sub-categories'].push(sub_cat);
+
+    if ( add_item ) {
+        if ((cat !="Select a category...") && (sub_cat)) {
+            var id = cat + "QQQ" + sub_cat;
+            p.attr('id', id);
+            btn.attr('id', id);
+            p.append(btn);
+            span.html(" <strong>" + cat + "</strong> &rarr; " + sub_cat ); 
+            p.append(span);
         }
+        else {
+            var id = cat + "QQQ";
+            p.attr('id', id);
+            btn.attr('id', id);
+            p.append(btn);
+            span.html(" <strong>" + cat + "</strong>"); 
+            p.append(span);
+        }
+    $("#answers").append(p);
+    btn.click(remove_cat_subcat);
     }
+    console.log(answer);
 }
 
 pybossa.presentTask(function(task, deferred){
