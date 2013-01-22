@@ -1,0 +1,641 @@
+<style type="text/css">
+    label {
+        font-size:16px;
+    }
+    #map_canvas label {
+        width: auto;
+        display: inline;
+    }
+    #map_canvas img {
+        max-width: none;
+    }
+
+</style>
+
+<div class="row">
+    <!-- Success and Error Messages for the user --> 
+    <!-- Question, task id, photo and action buttons for answering the question-->
+    <div class="span8 offset2" style="height:50px">
+        <div id="success" class="alert alert-success" style="display:none;">
+            <a class="close">×</a>
+            <strong>Well done!</strong> Your answer has been saved</strong>
+        <div id="taskcompleted" class="alert alert-info" style="display:none;">
+        <strong>The task has been completed!</strong> Thanks a lot!</strong>
+        </div>
+</div>
+
+<div id="finish" class="alert alert-success" style="display:none;">
+    <strong>Congratulations!</strong> You have participated in all available tasks!</strong>
+<br/>
+<div class="alert-actions">
+    <a class="btn small" href="/">Go back</a>
+    <a class="btn small" href="/app">or, Check other applications</a>
+</div>
+    </div>
+    <div id="error" class="alert alert-error" style="display:none;">
+<a class="close">×</a>
+<strong>Error!</strong> Something went wrong, please contact the site administrators</strong>
+    </div>
+    <div id="oldBrowser" class="alert alert-info" style="display:none;">
+<a class="close">×</a>
+<p><strong>Sorry!</strong> Your web browser does not support the application.<p>
+<div class="alert-actions">
+    <a class="btn small" href="/app">Please, try with another application</a>
+</div>
+    </div>
+  </div> <!-- End Success and Error Messages for the user -->
+</div>
+
+<!-- UI for the task -->
+<div class="row skeleton">
+  <div id="question" class="span12">
+      <h1>Question</h1>
+      <div class="row">
+          <div class="span8">
+              <div id="incident" class="well well-small">
+                  <h2 id="title"> </h2>
+                  <i class="icon-time"></i> <span id="date"></span>
+                  <p id="description">Loading incident...</p>
+              </div>
+              <div id="categories">
+                    <select id="category">
+                    <option>Select a category...</option>
+                    <option>ballot + results</option>
+                    <option>dangerous speech</option>
+                    <option>leadership</option>
+                    <option>polling station issues</option>
+                    <option>possitive events</option>
+                    <option>pre-election</option>
+                    <option>security</option>
+                    <option>urgent</option>
+                    </select>
+                    <select id="sub-categories" style="display:none">
+                    </select>
+              </div>
+              <div>
+                  <hr>
+                  <input id=""  type="text" placeholder="Paste link to picture of damage/impact here" style="display:none; width:395px;">
+                  <input id="videoLink"  type="text" placeholder="Paste link to video of damage/impact here" style="display:none; width:395px;">
+                  <input id="locationRef" type="text" placeholder="Paste reference to location, place, town, etc. here and click &rarr;" style="display:none; width:395px;">
+                  <button id="searchBtn" onclick="search()" class="btn" style="display:none; margin-top:-10px"><i class="icon-search"></i> Search</button>
+                  <hr>
+              </div>
+              <div id="geocoding">
+                </div>
+                <div id="coordinates">
+                    <i class="icon-map-marker"></i> Approximate damage/impact location: <strong> Longitude:</strong> <span id="lon"></span>, 
+                    <strong>Latitude:</strong> <span id="lat"></span>
+                </div>
+                <br/>
+                <div id="controls" class="btn-group" data-toggle="buttons-checkbox">
+                    <button id="navigate" class="btn btn-inverse active" onClick="toggleControl('navigate');">
+                        <i class="icon icon-white icon-move"></i> Navigate
+                    </button>
+                    <button id="point"    class="btn btn-inverse" onClick="toggleControl('point');">
+                        <i class="icon icon-white icon-map-marker"></i> Add damage/impact marker 
+                    </button>
+                </div>
+              </div>
+              <div style="padding-top:5px;">
+                <button class="btn btn-success" onclick="submitTask()"><i class="icon-thumbs-up"></i> Submit classification</button>
+              </div>
+          </div>
+          <div class="span3 well well-small">
+            <p>You are working now on task: <span id="task-id" class="label label-warning">#</span></p>
+            <p>You have completed: <span id="done" class="label label-info"></span> tweets from
+            <span id="total" class="label label-inverse"></span></p>
+            <div class="progress progress-striped">
+                <div id="progress" rel="tooltip" title="#" class="bar" style="width: 0%;"></div>
+            </div>
+            <span class="label label-warning"><i class="icon-bullhorn"></i> Tip</span> If you need help, check the 
+            <div style="padding-top:5px; text-align:center;"><a class="btn btn-primary" href="../tutorial"><i class="icon-question-sign"></i> Tutorial</a>
+            </div>
+          </div>
+          <div id="searching" class="alert alert-info span2" style="display:none">
+            <strong>Searching...</strong>
+          </div>
+          <div id="searchingDone" class="alert alert-success span2" style="display:none">
+            <strong>Location found!</strong>
+          </div>
+          <div id="searchingError" class="alert alert-warning span2" style="display:none">
+            <strong>Oops! Location not found</strong> Please add the marker yourself
+          </div>
+      </div>
+  </div>
+</div>
+
+<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+<script src="http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
+<script>
+var appname = 'ushahidi';
+var sub_ballot_plus_results = ['provisional results',
+                           'ballot box stuffing',
+                           'tampering with ballot box',
+                           'spoilt ballot papers not preserved for review',
+                           'ballot transport issues',
+                           'ballot boxes destroyed',
+                           'counting disrupted',
+                           'ballots not counted in a transparent manner',
+                           'issue with results delivery/communication',
+                           'errors or omission in counting',
+                           'disagree with declared results',];
+
+var sub_dangerous_speech = ['messages including dangerous speech'];
+
+var sub_leadership = ['education',
+                  'infrastructrure',
+                  'unemployment',
+                  'governance',];
+
+var sub_polling_station_issues = ['voting suspended',
+                              'ineligible voters allowed to vote',
+                              'wrong/inadequate voting materials',
+                              'illiterate voters not assisted',
+                              'voter impoersonation',
+                              'voter assister not taking oath of secrecy',
+                              'vote buying or bribery',
+                              'partisan polling officials',
+                              'campaigning at the polling station',
+                              'polling station ran out of ballot papers',
+                              'observers/media not granted access',
+                              'polling offcials refuse to share information with accredited observers',
+                              'polling station substandard (not numbered properly, not adequaletly lit)',
+                              'absence of IEBC officials at polling station at opening',
+                              'no presence of security officsers at polling station',
+                              'voter importation',];
+
+var sub_positive_events = ['police peace efforts',
+                       'civilian peace efforts',
+                       'everything fine'];
+var sub_pre_election =  ['campaign promises',
+                         'voter education',
+                         'voter registration',
+                         'nominations'];
+
+var sub_security = ['police violence',
+                    'intimidation or harassment',
+                    'civilian violence',
+                    'police arrest',]
+var categories = {
+    'security': {'sub-categories': sub_security},
+    'pre-election': {'sub-categories': sub_pre_election},
+    'polling station issues': {'sub-categories': sub_polling_station_issues},
+    'leadership': {'sub-categories': sub_leadership},
+    'dangerous speech': {'sub-categories': sub_dangerous_speech},
+    'ballot + results': {'sub-categories': sub_ballot_plus_results},
+    'possitive events': {'sub-categories': sub_positive_events},
+    'urgent': {},
+};
+
+
+
+
+//// Map for loading the markers and placing them
+//// var map = null;
+//// Variable to geocode the points of interest: 
+//var geocoder;
+//// OpenLayers point variable to save the lon & lat
+//var point;
+//// Layer for placing the damage/impact park marker. This layer allows drag & drop
+//var damageLayer;
+//// Layer for centering the city. This layer is static and does not allow drag & drop, is just a reference.
+//var cityLayer;
+//// Draw Controls
+//var drawControls = {};
+//
+//// This function creates the map, the layers, and sets up the map
+////function init_map() {
+////
+////}
+//
+function registerEvents(layer, task, deferred) {
+    layer.events.register("loadend", layer, function() {
+                console.log("Load End. Grid:" + this.grid.length + "x" + this.grid[0].length);
+                deferred.resolve(task);
+            });
+}
+
+//// Function to enable/disable the map drawing controls. 
+//// Only one can be active at a time
+function toggleControl(control) {
+    for (key in drawControls) {
+        ctrl = drawControls[key];
+        if (!$("#point").hasClass("disabled")) {
+            if ( (control == key) && (!ctrl.active) ) {
+                ctrl.activate();
+            }
+            else {
+                ctrl.deactivate();
+                $("#navigate").addClass("active");
+                $("#point").addClass("disabled");
+            }
+        }
+    }
+}
+//
+//// If user presses enter do the search
+//$("#locationRef").bind('keypress', function(e){
+//    var code = (e.keyCode ? e.keyCode : e.which);
+//    if(code == 13) { //Enter keycode
+//        search();
+//    }
+//});
+//
+// This function will load the marker of the city, and center the map on it
+function search(map, city) {
+    if (city) {
+        var place = city;
+        $("#searchingError").hide();
+    }
+    else {
+        $("#searching").show();
+        $("#searchingError").hide();
+        if ($('#locationRef').val()) {
+            var place = $("#locationRef").val(); 
+        }
+        else {
+            $("#searching").hide();
+            alert("Please, paste the location city or country to search in the map");
+            return
+        }
+    }
+
+    // Geocode the place using Nominatim OSM service
+    $.getJSON('http://nominatim.openstreetmap.org/search/' + place + '?format=json', function(output) {
+        if (output.length >= 1) {
+            //console.log("Lon: "+ output[0].lon + " Lat: " + output[0].lat);
+            // Clean previous markers
+            $("#navigate").addClass("active");
+            $("#point").removeClass("disabled");
+            $("#point").removeClass("active");
+            damageLayer.removeAllFeatures();
+            cityLayer.removeAllFeatures();
+            $("#answerbtn").addClass("disabled");
+            $("#answerbtn").unbind('click',submitTask);
+            //console.log("Map cleaned!");
+            // Create a LonLat object to load the place marker
+            var lonLat = new OpenLayers.LonLat(output[0].lon, output[0].lat)
+                .transform(
+                    new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+                    map.getProjectionObject() // to Spherical Mercator Projection
+                );
+            // Set the marker position
+            point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+            cityLayer.addFeatures([new OpenLayers.Feature.Vector(point)]);
+            // Center the map
+            map.setCenter(lonLat,4);
+            //lonLat.transform(
+            //        map.getProjectionObject(), // from Spherical Mercator Projection
+            //        new OpenLayers.Projection("EPSG:4326") // to transform from WGS 1984
+            //);
+            // Reset the lon & lat span objects
+            $("#lon").text("-");
+            $("#lat").text("-");
+
+            // Only show the messages when looking for user input
+            if ($('#locationRef').val()) {
+                $("#searching").hide().fadeOut();
+                $("#searchingDone").show().fadeIn().delay(2000).fadeOut();
+            }
+        }
+        else {
+            // City not found, sorry
+            // Warn the user and try with another place
+            $("#searching").hide().fadeOut();
+            $("#searchingError").show();
+        }
+    });
+}
+//
+//initialize();
+//search("kenya");
+//
+//// See http://stackoverflow.com/questions/37684/how-to-replace-plain-urls-with-links 
+//// for more details on this function
+function replaceURLWithHTMLLinks(text) {
+    var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    return text.replace(exp,"<a target='_blank' href='$1'>$1</a>"); 
+}
+//
+//$("#location").click(
+//    function() {
+//    if ($("#locationRef").is(":visible")) {
+//        $("#locationRef").hide();
+//        $("#geocoding").hide();
+//        $("#searchBtn").hide();
+//    }
+//    else {
+//        $("#locationRef").show();
+//        $("#geocoding").show();
+//        $("#searchBtn").show();
+//        // ScrollTo this element
+//        // See this for further details http://stackoverflow.com/questions/6677035/jquery-scroll-to-element
+//        $('html, body').animate({
+//                 scrollTop: $("#locationRef").offset().top - 200
+//             }, 2000);
+//    }
+//}
+//);
+//
+function loadUserProgress() {
+    pybossa.userProgress(appname).done(function(data){
+        var pct = Math.round((data.done*100)/data.total);
+        $("#progress").css("width", pct.toString() +"%");
+        $("#progress").attr("title", pct.toString() + "% completed!");
+        $("#progress").tooltip({'placement': 'bottom'}); 
+        $("#total").text(data.total);
+        $("#done").text(data.done);
+    });
+}
+//
+// Function to submit and save the TaskRun in PyBossa
+function submitTask() {
+    // Get the task-id
+    var taskid = $("#task-id").text();
+    // Get classification:
+    var picture = 0;
+    var video = 0;
+    var location = 0;
+    var other = 0;
+    var pictureLink = null;
+    var videoLink = null;
+    var locationRef = null;
+
+    if ($('#picture').is(':checked')) {
+        picture = 1;
+        console.log($('#pictureLink').val());
+        if ($('#pictureLink').val()) {
+            pictureLink = $("#pictureLink").val();
+        }
+        else {
+            alert("Please, paste the link of the picture");
+            return
+
+        }
+    }
+
+    if ($('#video').is(':checked')) {
+        video = 1;
+        if ($('#videoLink').val()) {
+            videoLink = $("#videoLink").val();
+        }
+        else {
+            alert("Please, paste the link of the video");
+            return
+        }
+    }
+
+    if ($('#location ').is(':checked')) {
+        location = 1;
+        if ($('#locationRef').val()) {
+            locationRef = $("#locationRef").val();
+        }
+        else {
+            alert("Please, paste the location ref of the damage");
+            return
+        }
+        
+        if (damageLayer.features.length > 0) {
+            // Convert the feature location, the urban park marker position, into the GeoJSON format
+            geojson = new OpenLayers.Format.GeoJSON({
+                'internalProjection': map.baseLayer.projection,
+                'externalProjection': new OpenLayers.Projection("EPSG:4326")
+                });
+
+            var loc = JSON.parse(geojson.write(damageLayer.features[0]));
+            }
+        else {
+            alert("Please, we are also need the latitude and longitude coordinates. Click in the Locate in the map button and place a marker near the location of the damage");
+            return
+            }
+    }
+
+    if ($('#other').is(':checked')) {
+        other = 1;
+    }
+
+    if ( (video == 0) && (location==0) && (other==0) && (picture ==0) ) {
+        alert("Please, select one of the categories. If none of the them fits, select Other");
+        return;
+    }
+
+    var answer = {picture:picture, 
+                  video:video, 
+                  location:location, 
+                  other:other, 
+                  videoLink: videoLink,
+                  pictureLink: pictureLink,
+                  locationRef: locationRef,
+                  loc: loc,
+    };
+    // Save the task
+    pybossa.saveTask(taskid, answer).done( function( data ) {
+        // Uncoment next line for debugging purposes
+        //console.log("Answer saved!");
+        // FadeIn & Out the success div feedback
+        $("#success").fadeIn();
+        setTimeout(function() { $("#success").fadeOut() }, 2000);
+        // Load a new task
+        //pybossa.newTask(appname).done( function( data ){ loadData( data ) });
+        window.location.pathname = "/app/" + appname + "/newtask";
+    });
+}
+
+// Check if the user is loading directly a task or requesting a new one
+//var taskId = pybossa.getCurrentTaskId(window.location.pathname);
+//
+//if (taskId){
+//    // The user is loading directly a task, so load then input data
+//    loadTask(taskId);
+//}
+//else {
+//    // The user is requesting a new task, so get a new one
+//    pybossa.newTask(appname).done( function( data ) { 
+//
+//        if ( !$.isEmptyObject(data.task) ) {
+//            window.location.pathname = "/app/" + appname + "/task/" + data.task.id;
+//        }
+//        else {
+//            $(".skeleton").hide();
+//            $("#finish").fadeIn();
+//        }
+//    });
+//}
+
+pybossa.taskLoaded(function(task, deferred){
+        if ( !$.isEmptyObject(task) ) {
+            var map_canvas = $("<div/>", {
+                'id': 'map_canvas',
+            });
+            map_canvas.css('width', 620);
+            map_canvas.css('height', 310);
+            $("#geocoding").html('').append(map_canvas);
+
+        var map = new OpenLayers.Map('map_canvas', {
+            controls: [
+                new OpenLayers.Control.Navigation(),
+                new OpenLayers.Control.PanZoom(),
+                new OpenLayers.Control.LayerSwitcher(),
+                new OpenLayers.Control.MousePosition({displayProjection: new OpenLayers.Projection("EPSG:4326")}),
+                new OpenLayers.Control.ScaleLine(),
+                new OpenLayers.Control.Attribution()
+                ]
+        });
+
+        // Layers
+        // Open Street Map (default layer)
+        var osm = new OpenLayers.Layer.OSM("Open Street Map")
+        //registerEvents(osm);
+        map.addLayer(osm);
+
+        // Google Maps Satellite layer
+        map.addLayer(new OpenLayers.Layer.Google(
+            "Google Satellite",
+            {type: google.maps.MapTypeId.SATELLITE}
+        ));
+
+        // Google Maps Physical layer
+        map.addLayer(new OpenLayers.Layer.Google(
+            "Google Physical",
+            {type: google.maps.MapTypeId.TERRAIN}
+        ));
+
+        // Icon for the City Marker
+        var styleMapCity = new OpenLayers.StyleMap({
+            pointRadius: 15,
+            externalGraphic: 'http://img225.imageshack.us/img225/5237/youarehere2.png'
+        });
+
+        // Icon for the typhoon/tornado Marker 
+        var styleDamage = new OpenLayers.StyleMap({
+            pointRadius: 15,
+            externalGraphic: 'http://i.imgur.com/D6W1h.png'
+        });
+
+        // Layer for placing the city marker
+        cityLayer = new OpenLayers.Layer.Vector("City marker", {
+            styleMap: styleMapCity,
+            attribution: 'Marker Icons by <a href="http://mapicons.nicolasmollet.com/">Nicolas Mollet</a>'
+        });
+        map.addLayer(cityLayer);
+
+        // Layer for placing the damage/impact marker
+        damageLayer = new OpenLayers.Layer.Vector("Damage/Impact Layer", {
+            styleMap: styleDamage,
+            attribution: 'Marker Icons by <a href="http://mapicons.nicolasmollet.com/">Nicolas Mollet</a>'
+        });
+        map.addLayer(damageLayer);
+
+        // Function to allow only the addition of one damage/impact marker per tweet 
+        // The function gets the feature (point) and gets its location, transforms it to the right projection
+        // loads the lon and at into the HTML skeleton and disables the toolbar, so no more points can be added
+        disablePoint = function(feature) { 
+            if ($("#answerbtn").hasClass("disabled")) {
+                $("#answerbtn").removeClass('disabled');
+                $("#answerbtn").click(submitTask);
+            }
+
+            $("#lat").text(feature.geometry.y);
+            var tmp = feature.geometry.clone();
+            tmp.transform(
+                    map.getProjectionObject(), // from Spherical Mercator Projection
+                    new OpenLayers.Projection("EPSG:4326") // to transform from WGS 1984
+            );
+            $("#lon").text(tmp.x);       
+            $("#lat").text(tmp.y);       
+            toggleControl('point');
+        }
+
+        // Default location to load the map
+        var lonLat = new OpenLayers.LonLat(-0.1279688 ,51.5077286 )
+            .transform(
+                new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+                new OpenLayers.Projection("EPSG:900913") // to Spherical Mercator Projection
+            );
+
+        // Enable drag & drop in the damage/impact Layer
+        var drag = new OpenLayers.Control.DragFeature(damageLayer, {
+            onComplete: function() {
+                var damagePoint = damageLayer.features[0].geometry
+                var tmp = damagePoint.clone();
+                tmp.transform(
+                        map.getProjectionObject(), // from Spherical Mercator Projection
+                        new OpenLayers.Projection("EPSG:4326") // to transform from WGS 1984
+                );
+                // When the marker has been dropped, update the lon & lat of the urban park
+                $("#lon").text(tmp.x);       
+                $("#lat").text(tmp.y);       
+            }
+        
+        });
+        // Add the drag & drop control into the map
+        map.addControl(drag);
+        // Activate drag & drop
+        drag.activate();
+
+        drawControls = {
+            point:      new OpenLayers.Control.DrawFeature(damageLayer, OpenLayers.Handler.Point, 
+                        { 'featureAdded': disablePoint})
+        }
+
+        // Add them to the map
+        for (var key in drawControls) {
+            map.addControl(drawControls[key]);
+        }
+        task.map = map_canvas;
+        search(map, 'kenya');
+        deferred.resolve(task);
+        }
+        else {
+            deferred.resolve(task);
+        }
+});
+
+function show_sub_categories(selected) {
+    if (selected in categories) {
+        var select = $("select#sub-categories");
+        select.html("");
+        if ('sub-categories' in categories[selected]) {
+            var l = categories[selected]['sub-categories'].length;
+            select.append('<option>Select a sub-category...</option>');
+            for(i=0;i<l;i++) {
+                select.append('<option>' + categories[selected]['sub-categories'][i] + '</option>');
+            }
+            $("#sub-categories").show();
+            //$("#categories").append(select);
+        }
+        else {
+            $("#sub-categories").hide();
+        }
+    }
+}
+
+pybossa.presentTask(function(task, deferred){
+        if ( !$.isEmptyObject(task) ) {
+            if (task.state=='completed') {
+                $('#answer').hide();
+                $('#taskcompleted').show();
+            }
+            loadUserProgress();
+            $("#question h1").text(task.info.question);
+            $("#task-id").text(task.id);
+            $("#incident>#title").html(task.info.incident.title);
+            $("#incident>#date").html(task.info.incident.date);
+            $("#incident>#description").html(replaceURLWithHTMLLinks(task.info.incident.description));
+            $("#geocoding").html('').append(task.info.map);
+
+            $("select#category option:eq(0)").prop("selected", true);
+            // Add some logic for the categories
+            $("select#category").change(function(){
+                var cat = $(this).children(":selected").html();
+                show_sub_categories(cat);
+            });
+        }
+        else {
+            $(".skeleton").hide();
+            $("#finish").fadeIn();
+        }
+});
+
+pybossa.run(appname);
+</script>
