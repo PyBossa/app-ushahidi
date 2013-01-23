@@ -116,7 +116,7 @@
             </div>
             <div class="span4">
                 <div class="input-append">
-                    <input id="locationRef" class="span4" type="text" placeholder="Paste reference to location, place, town, etc. here and click &rarr;">
+                    <input id="locationRef" class="span4" type="text" placeholder="Street, City, Country">
                     <button class="btn" type="button" id="searchBtn" onclick="search()"><i class="icon-search"></i> Search!</button>
                 </div>
                 <div id="controls" class="btn-group" data-toggle="buttons-checkbox" style="margin-top:5px;">
@@ -302,9 +302,11 @@ function search(city, zoom) {
     if (city) {
         var place = city;
         $("#searchingError").hide();
+        $("#searchingDone").hide();
     }
     else {
         $("#searching").show();
+        $("#searchingDone").hide();
         $("#searchingError").hide();
 
         if ($('#locationRef').val()) {
@@ -338,6 +340,7 @@ function search(city, zoom) {
         if (output.length >= 1) {
             //console.log("Lon: "+ output[0].lon + " Lat: " + output[0].lat);
             // Clean previous markers
+            $("#locationRef").val(output[0].display_name);
             $("#navigate").addClass("active");
             $("#point").removeClass("disabled");
             $("#point").removeClass("active");
@@ -737,20 +740,25 @@ function add_cat_subcat() {
 }
 
 function reset_forms() {
-    console.log(answer);
     // HTML DOM
     // Step 1
     $("div#answers").empty();
     // Step 2
+    $("#locationRef").val("");
     $("#searching").hide();
     $("#searchingDone").hide();
     $("#searchingError").hide();
     // Step 3
-    $("ul#review").empty();
-    $("div#reviewLoc").empty();
+    $("#review").empty();
+    $("#reviewLoc").empty();
     // MAP
     incidentLayer.removeAllFeatures();
-    answer = {};
+    for (var key in answer) {
+        delete answer[key];
+    }
+    for (var key in loc) {
+        delete loc[key];
+    }
 }
 
 pybossa.presentTask(function(task, deferred){
@@ -760,6 +768,7 @@ pybossa.presentTask(function(task, deferred){
                 $('#taskcompleted').show();
             }
             loadUserProgress();
+            reset_forms();
             $("#stepbar").css("width", "0%");
             $("span#step").html(1);
             $("#step1").show();
@@ -784,7 +793,7 @@ pybossa.presentTask(function(task, deferred){
                 add_cat_subcat();
             });
 
-            $("#geoBtn").click(function(){
+            $("#geoBtn").off('click').on('click', function(){
                 $("#stepbar").css("width", "100%");
                 $("span#step").html(3);
                 $("#step2").hide();
@@ -816,7 +825,7 @@ pybossa.presentTask(function(task, deferred){
                         'id': task.info.incident.id,
                         'title': task.info.incident.title,
                         'date': task.info.incident.date,
-                        'location': answer.location,
+                        'location': $("#locationRef").val(),
                         'description': task.info.incident.description,
                         'category': answer,
                         'latitude': loc['lat'],
