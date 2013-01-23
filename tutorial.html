@@ -1,0 +1,77 @@
+<div class="row">
+    <div class="span12">
+        <div id="modal" class="modal hide fade">
+            <div class="modal-header">
+                <h3>Kenya Elections tutorial TBD!</h3>
+            </div>
+            <div id="0" class="modal-body" style="display:none">
+                <p><strong>Hi!</strong> Thanks a lot for helping us in classifying the incidents collected on Ushahidi platform.
+               </p> 
+            </div>
+            <div id="1" class="modal-body" style="display:none">
+                <p>The application is really <strong>simple</strong>: it has only <strong>3 steps</strong>. The first one loads a report and asks you to categorize it according to different categories and its sub-categories.</p>
+                <img class="img-polaroid" src="http://i.imgur.com/EqVpN4q.png">
+            </div>
+            <div id="2" class="modal-body" style="display:none">
+                <p>In the second step, you have to <strong>find the location</strong> from the report. You will be able to <strong>place it in a map</strong></p>
+                <img class="img-polaroid" src="http://i.imgur.com/d99B2Xt.png"/>
+            </div>
+            <div id="3" class="modal-body" style="display:none">
+                <p>Usually you will: 
+                <ul>
+                    <li>find the <strong>name of the city</strong></li>
+                    <li><strong>paste it in the input field</strong> and</li>
+                    <li><strong>click in the search button</strong> <a href="#" class="btn"><i class="icon-search"></i> Search</a></li>
+                </ul>
+                </p>
+                <img class="img-polaroid" src="http://i.imgur.com/d99B2Xt.png"/>
+                <hr>
+                <p>The map will search that location and add a blue marker, then <strong>you have to place a marker in the position that the tweet is referencing</strong>.</p>
+                <p>To place the marker: 
+                <ul>
+                    <li><strong>click in the button</strong>: <a href="#" class="btn btn-inverse"><i class="icon-map-marker"></i> Add a marker</a></li>
+                    <li><strong>hover the mouse to place it at the location</strong> (a <strong>green typhoon</strong> marker will appear)</li>
+                    <li><strong>click to set the coordinates</strong></li>
+                </ul>
+                <span class="label label-info"><i class="icon-bullhorn"></i>Tip:</span> If you need to fix the position you can drag and drop it again.
+                </p>
+            </div>
+            <div id="4" class="modal-body" style="display:none">
+                <p>Once you have chosen one of the categories and located the position of the report, you will be able to review the classification in the third and final step. Click in the <strong>Submit classification</strong> button and you will have classified one report.</p>
+                <p>That's all!</p>
+            </div>
+            <div class="modal-footer">
+                <a id="prevBtn" href="#" onclick="showStep('prev')" class="btn">Previous</a>
+                <a id="nextBtn" href="#" onclick="showStep('next')" class="btn btn-success">Next</a>
+                <a id="startContrib" href="../ushahidi/newtask" class="btn btn-primary" style="display:none"><i class="icon-thumbs-up"></i> Start classifying!</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var step = -1;
+    function showStep(action) {
+        $("#" + step).hide();
+        if (action == 'next') {
+            step = step + 1;
+        }
+        if (action == 'prev') {
+            step = step - 1;
+        }
+        if (step == 0) {
+            $("#prevBtn").hide();
+        }
+        else {
+            $("#prevBtn").show();
+        }
+
+        if (step == 4 ) {
+            $("#nextBtn").hide();
+            $("#startContrib").show();
+        }
+        $("#" + step).show();
+    }
+
+    showStep('next');
+    $("#modal").modal('show');
+</script>
