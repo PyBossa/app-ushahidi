@@ -340,7 +340,9 @@ function search(city, zoom) {
         if (output.length >= 1) {
             //console.log("Lon: "+ output[0].lon + " Lat: " + output[0].lat);
             // Clean previous markers
-            $("#locationRef").val(output[0].display_name);
+            if (place != 'kenya') {
+                $("#locationRef").val(output[0].display_name);
+            }
             $("#navigate").addClass("active");
             $("#point").removeClass("disabled");
             $("#point").removeClass("active");
@@ -688,7 +690,7 @@ function add_cat_subcat() {
     var add_item = false;
 
     if (cat !="Select a category...") {
-        if (cat == 'urgent') { 
+        if ((cat == 'urgent') || (cat =='needs translation')) { 
             if ( !(cat in answer) ) {
                 answer[cat]={'sub-categories': []};
                 add_item = true;
