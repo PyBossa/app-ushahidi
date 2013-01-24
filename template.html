@@ -59,7 +59,7 @@
           <h2 id="title"></h2>
           <i class='icon-time'></i> Date: <span id="date"></span><br/>
           <i class='icon-globe'></i> Location: <span id="location"></span><br/>
-          <i class='icon-map-marker'></i> Coordinates:  Lat <span id="latitude"></span> Lon <span id="longitude"></span>
+          <i class='icon-map-marker'></i> Coordinates:  Lon <span id="longitude"></span> Lat <span id="latitude"></span> 
           <hr>
           <p id="description">Loading incident...</p>
       </div>
@@ -112,12 +112,13 @@
 <div id="step2" class="row skeleton" style="display:none">
     <div class="span12">
         <h3 class="noLocation" style="display:none">Step 2: Place the report in the map</h3>
-        <h3 class="withLocation" style="display:none">Step 2: Validate the location of the report</h3>
+        <h3 class="withLocation" style="display:none">Step 2: Validate/Improve the location of the report</h3>
+        <span class="label label-info withLocation"><i class="icon-bullhorn"></i> Tip:</span> Enable/disable the satellite layer to get more information.
         <div class="row">
             <div class="span8">
                 <div class="withLocation">
                     <i class='icon-globe'></i> Location: <span id="withLocation"></span><br/>
-                    <i class='icon-map-marker'></i> Coordinates:  Lat <span id="withLatitude"></span> Lon <span id="withLongitude"></span>
+                    <i class='icon-map-marker'></i> Coordinates:  Lon <span id="withLongitude"></span> Lat <span id="withLatitude"></span> 
                 </div>
                 <div id="geocoding"></div>
             </div>
@@ -725,6 +726,7 @@ function reset_forms(task) {
     $("#searchingError").hide();
     $("#point").removeClass("disabled");
     $("#point").removeClass("active");
+    $("#catBtn").hide();
     // Step 3
     $("#review").empty();
     $("#reviewLoc").empty();
