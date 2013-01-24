@@ -2,11 +2,11 @@
     label {
         font-size:16px;
     }
-    #map_canvas label {
+    .map_canvas label {
         width: auto;
         display: inline;
     }
-    #map_canvas img {
+    .map_canvas img {
         max-width: none;
     }
 
@@ -56,8 +56,11 @@
 <div class="row skeleton">
   <div class="span7">
       <div id="incident" class="well well-small">
-          <h2 id="title"> </h2>
-          <i class="icon-time"></i> <span id="date"></span>
+          <h2 id="title"></h2>
+          <i class='icon-time'></i> Date: <span id="date"></span><br/>
+          <i class='icon-globe'></i> Location: <span id="location"></span><br/>
+          <i class='icon-map-marker'></i> Coordinates:  Lat <span id="latitude"></span> Lon <span id="longitude"></span>
+          <hr>
           <p id="description">Loading incident...</p>
       </div>
   </div>
@@ -76,7 +79,7 @@
 <div class="row skeleton">
     <div class="span12" style="text-align:center">
         <h2>Step <span id="step"></span> of 3</h2>
-        <div class="progress progress-success progress-striped active">
+        <div class="progress progress-success progress-striped">
             <div id="stepbar" class="bar" style="width: 0%;"></div>
         </div>
     </div>
@@ -108,22 +111,23 @@
 
 <div id="step2" class="row skeleton" style="display:none">
     <div class="span12">
-        <h3>Step 2: Place the report in the map</h3>
+        <h3 class="noLocation" style="display:none">Step 2: Place the report in the map</h3>
+        <h3 class="withLocation" style="display:none">Step 2: Validate the location of the report</h3>
         <div class="row">
             <div class="span8">
+                <div class="withLocation">
+                    <i class='icon-globe'></i> Location: <span id="withLocation"></span><br/>
+                    <i class='icon-map-marker'></i> Coordinates:  Lat <span id="withLatitude"></span> Lon <span id="withLongitude"></span>
+                </div>
                 <div id="geocoding"></div>
-
             </div>
             <div class="span4">
                 <div class="input-append">
                     <input id="locationRef" class="span4" type="text" placeholder="Street, City, Country">
-                    <button class="btn" type="button" id="searchBtn" onclick="search()"><i class="icon-search"></i> Search!</button>
+                    <button class="btn" type="button" id="searchBtn"><i class="icon-search"></i> Search!</button>
                 </div>
-                <div id="controls" class="btn-group" data-toggle="buttons-checkbox" style="margin-top:5px;">
-                    <button id="navigate" class="btn btn-inverse active" onClick="toggleControl('navigate');">
-                        <i class="icon icon-white icon-move"></i> Navigate
-                    </button>
-                    <button id="point"    class="btn btn-inverse" onClick="toggleControl('point');">
+                <div id="controls" style="margin-top:5px;">
+                    <button id="point"    class="btn btn-inverse">
                         <i class="icon icon-white icon-map-marker"></i> Add a marker 
                     </button>
                 </div>
@@ -173,7 +177,7 @@
 var appname = 'ushahidi';
 var answer = {};
 var loc = {};
-var map;
+//var map;
 var sub_ballot_plus_results = ['provisional results',
                            'ballot box stuffing',
                            'tampering with ballot box',
@@ -235,26 +239,6 @@ var categories = {
 };
 
 
-
-
-//// Map for loading the markers and placing them
-//// var map = null;
-//// Variable to geocode the points of interest: 
-//var geocoder;
-//// OpenLayers point variable to save the lon & lat
-//var point;
-//// Layer for placing the damage/impact park marker. This layer allows drag & drop
-var incidentLayer;
-//// Layer for centering the city. This layer is static and does not allow drag & drop, is just a reference.
-//var cityLayer;
-//// Draw Controls
-//var drawControls = {};
-//
-//// This function creates the map, the layers, and sets up the map
-////function init_map() {
-////
-////}
-//
 function registerEvents(layer, task, deferred) {
     layer.events.register("loadend", layer, function() {
                 console.log("Load End. Grid:" + this.grid.length + "x" + this.grid[0].length);
@@ -262,43 +246,30 @@ function registerEvents(layer, task, deferred) {
             });
 }
 
-//// Function to enable/disable the map drawing controls. 
-//// Only one can be active at a time
-function toggleControl(control) {
-    for (key in drawControls) {
-        ctrl = drawControls[key];
-        if (!$("#point").hasClass("disabled")) {
-            if ( (control == key) && (!ctrl.active) ) {
-                ctrl.activate();
-            }
-            else {
-                ctrl.deactivate();
-                $("#navigate").addClass("active");
-                $("#point").addClass("disabled");
-            }
+function center_map(map, lon, lat) {
+    // Create a LonLat object to load the place marker
+    var lon = parseFloat(lon);
+    var lat = parseFloat(lat);
+    var lonLat = new OpenLayers.LonLat((lon), (lat))
+        .transform(
+            new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+            map.getProjectionObject() // to Spherical Mercator Projection
+        );
+    // Set the marker position
+    point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+    for(i=0;i<map.layers.length;i++){
+        var layer = map.layers[i];
+        if(layer.name == 'Marker') {
+            layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
         }
     }
+    //layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
+    console.log(map.div);
+    map.setCenter(lonLat, 12);
 }
-//
-// If user presses enter do the search
-$("#locationRef").bind('keypress', function(e){
-    var code = (e.keyCode ? e.keyCode : e.which);
-    if(code == 13) { //Enter keycode
-        var search_query = $("#locationRef").val();
-        var grade = search_query.split(",");
-        var zoom = 5;
-        if (grade.length <= 1) {
-            zoom = 5;
-        }
-        if (grade.length >= 2) {
-            zoom = 14;
-        }
-        search(search_query, zoom);
-    }
-});
 
 // This function will load the marker of the city, and center the map on it
-function search(city, zoom) {
+function search(map, city, zoom) {
     if (city) {
         var place = city;
         $("#searchingError").hide();
@@ -346,8 +317,6 @@ function search(city, zoom) {
             $("#navigate").addClass("active");
             $("#point").removeClass("disabled");
             $("#point").removeClass("active");
-            incidentLayer.removeAllFeatures();
-            cityLayer.removeAllFeatures();
             $("#answerbtn").addClass("disabled");
             $("#answerbtn").unbind('click',submitTask);
             //console.log("Map cleaned!");
@@ -509,14 +478,16 @@ function submitTask() {
 
 pybossa.taskLoaded(function(task, deferred){
         if ( !$.isEmptyObject(task) ) {
-            var map_canvas = $("<div/>", {
-                'id': 'map_canvas',
+            task.map_canvas = $("<div/>", {
+                'id': 'map_task_' +  task.id,
+                'class': 'map_canvas'
             });
-            map_canvas.css('width', 620);
-            map_canvas.css('height', 310);
-            $("#geocoding").html('').append(map_canvas);
+            task.map_canvas.css('width', 620);
+            task.map_canvas.css('height', 310);
+            task.map_canvas.css('display', "none");
+            $("#geocoding").append(task.map_canvas);
 
-        map = new OpenLayers.Map('map_canvas', {
+        task.map = new OpenLayers.Map('map_task_' + task.id, {
             controls: [
                 new OpenLayers.Control.Navigation(),
                 new OpenLayers.Control.PanZoom(),
@@ -531,16 +502,16 @@ pybossa.taskLoaded(function(task, deferred){
         // Open Street Map (default layer)
         var osm = new OpenLayers.Layer.OSM("Open Street Map")
         //registerEvents(osm);
-        map.addLayer(osm);
+        task.map.addLayer(osm);
 
         // Google Maps Satellite layer
-        map.addLayer(new OpenLayers.Layer.Google(
+        task.map.addLayer(new OpenLayers.Layer.Google(
             "Google Satellite",
             {type: google.maps.MapTypeId.SATELLITE}
         ));
 
         // Google Maps Physical layer
-        map.addLayer(new OpenLayers.Layer.Google(
+        task.map.addLayer(new OpenLayers.Layer.Google(
             "Google Physical",
             {type: google.maps.MapTypeId.TERRAIN}
         ));
@@ -558,35 +529,36 @@ pybossa.taskLoaded(function(task, deferred){
         });
 
         // Layer for placing the city marker
-        cityLayer = new OpenLayers.Layer.Vector("City marker", {
+        var cityLayer = new OpenLayers.Layer.Vector("Marker", {
             styleMap: styleMapCity,
             attribution: 'Marker Icons by <a href="http://mapicons.nicolasmollet.com/">Nicolas Mollet</a>'
         });
-        map.addLayer(cityLayer);
+        task.map.addLayer(cityLayer);
 
         // Layer for placing the damage/impact marker
-        incidentLayer = new OpenLayers.Layer.Vector("Damage/Impact Layer", {
+        var incidentLayer = new OpenLayers.Layer.Vector("Incident", {
             styleMap: styleDamage,
             attribution: 'Marker Icons by <a href="http://mapicons.nicolasmollet.com/">Nicolas Mollet</a>'
         });
-        map.addLayer(incidentLayer);
+        task.map.addLayer(incidentLayer);
 
         // Function to allow only the addition of one damage/impact marker per tweet 
         // The function gets the feature (point) and gets its location, transforms it to the right projection
         // loads the lon and at into the HTML skeleton and disables the toolbar, so no more points can be added
-        disablePoint = function(feature) { 
+        var disablePoint = function(feature) { 
             $("#geoBtn").show();
             $("#stepbar").css('width', '66%');
             $("#lat").text(feature.geometry.y);
             var tmp = feature.geometry.clone();
             tmp.transform(
-                    map.getProjectionObject(), // from Spherical Mercator Projection
+                    task.map.getProjectionObject(), // from Spherical Mercator Projection
                     new OpenLayers.Projection("EPSG:4326") // to transform from WGS 1984
             );
             $("#lon").text(tmp.x);       
             $("#lat").text(tmp.y);       
             loc = {"lon":tmp.x, "lat":tmp.y};
-            toggleControl('point');
+            task.drawControls['point'].deactivate();
+            $("#point").addClass("disabled");
         }
 
         // Default location to load the map
@@ -602,7 +574,7 @@ pybossa.taskLoaded(function(task, deferred){
                 var damagePoint = incidentLayer.features[0].geometry
                 var tmp = damagePoint.clone();
                 tmp.transform(
-                        map.getProjectionObject(), // from Spherical Mercator Projection
+                        task.map.getProjectionObject(), // from Spherical Mercator Projection
                         new OpenLayers.Projection("EPSG:4326") // to transform from WGS 1984
                 );
                 // When the marker has been dropped, update the lon & lat of the urban park
@@ -613,26 +585,27 @@ pybossa.taskLoaded(function(task, deferred){
         
         });
         // Add the drag & drop control into the map
-        map.addControl(drag);
+        task.map.addControl(drag);
         // Activate drag & drop
         drag.activate();
 
-        drawControls = {
+        task.drawControls = {
             point:      new OpenLayers.Control.DrawFeature(incidentLayer, OpenLayers.Handler.Point, 
                         { 'featureAdded': disablePoint})
         }
 
         // Add them to the map
-        for (var key in drawControls) {
-            map.addControl(drawControls[key]);
+        for (var key in task.drawControls) {
+            task.map.addControl(task.drawControls[key]);
         }
-        task.map = map_canvas;
-        search('kenya');
+
         deferred.resolve(task);
         }
         else {
             deferred.resolve(task);
         }
+
+
 });
 
 function show_sub_categories(selected) {
@@ -741,7 +714,7 @@ function add_cat_subcat() {
     }
 }
 
-function reset_forms() {
+function reset_forms(task) {
     // HTML DOM
     // Step 1
     $("div#answers").empty();
@@ -750,11 +723,20 @@ function reset_forms() {
     $("#searching").hide();
     $("#searchingDone").hide();
     $("#searchingError").hide();
+    $("#point").removeClass("disabled");
+    $("#point").removeClass("active");
     // Step 3
     $("#review").empty();
     $("#reviewLoc").empty();
     // MAP
-    incidentLayer.removeAllFeatures();
+    for(i=0;i<task.map.layers.length;i++){
+        var layer = task.map.layers[i];
+        if ( (layer.name == 'Incident') || (layer.name == 'Marker') ){
+            layer.removeAllFeatures();
+        }
+        
+    }
+    $("#geocoding>#map_task_" + task.id).remove();
     for (var key in answer) {
         delete answer[key];
     }
@@ -770,7 +752,8 @@ pybossa.presentTask(function(task, deferred){
                 $('#taskcompleted').show();
             }
             loadUserProgress();
-            reset_forms();
+            task.map.zoomToMaxExtent();
+            //reset_forms(task);
             $("#stepbar").css("width", "0%");
             $("span#step").html(1);
             $("#step1").show();
@@ -781,7 +764,53 @@ pybossa.presentTask(function(task, deferred){
             $("#incident>#title").html(task.info.incident.title);
             $("#incident>#date").html(task.info.incident.date);
             $("#incident>#description").html(replaceURLWithHTMLLinks(task.info.incident.description));
-            $("#geocoding").html('').append(task.info.map);
+            // Configure the Search actions for the button and input field
+            $("#searchBtn").off('click').on('click', function(){
+                search(task.map);
+            });
+            // If user presses enter do the search
+            $("#locationRef").bind('keypress', function(e){
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if(code == 13) { //Enter keycode
+                    search(task.map);
+                }
+            });
+
+
+            $("#point").off('click').on('click', function(){
+                if (!$("#point").hasClass("disabled")) {
+                    task.drawControls['point'].activate();
+                    $("#navigate").addClass("active");
+                    $("#point").addClass("disabled");
+                }
+            });
+
+            task.map_canvas.show();
+            
+            if (task.info.incident.location) {
+                $("#incident>#location").html(task.info.incident.location);
+                $(".withLocation").show();
+                $("#withLocation").html(task.info.incident.location);
+                $("#locationRef").val(task.info.incident.location);
+            }
+            else {
+                $(".noLocation").show();
+            }
+            if (task.info.incident.latitude) {
+                $("#incident>#latitude").html(task.info.incident.latitude);
+                $("#withLatitude").html(task.info.incident.latitude);
+            }
+            if (task.info.incident.longitude) {
+                $("#incident>#longitude").html(task.info.incident.longitude);
+                $("#withLongitude").html(task.info.incident.longitude);
+            }
+
+            if (task.info.incident.longitude && task.info.incident.latitude) {
+                center_map(task.map, task.info.incident.longitude, task.info.incident.latitude);
+            }
+            else {
+                search(task.map, 'kenya');
+            }
 
             $("select#category option:eq(0)").prop("selected", true);
             // Add some logic for the categories
@@ -836,7 +865,7 @@ pybossa.presentTask(function(task, deferred){
                         'verified': task.info.incident.verified
                     };
                     pybossa.saveTask(task.id, incident_answer).done(function(){
-                        reset_forms();
+                        reset_forms(task);
                         deferred.resolve();
                     });
                 }
