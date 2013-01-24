@@ -131,6 +131,9 @@
                     <button id="point"    class="btn btn-inverse">
                         <i class="icon icon-white icon-map-marker"></i> Add a marker 
                     </button>
+                    <button id="dontKnow"    class="btn btn-inverse">
+                         <i class="icon-question-sign"></i> I don't know
+                    </button>
                 </div>
                 <div id="coordinates" style="font-size: 14px; padding-top:5px;">
                     <i class="icon-map-marker"></i> Approximate location:
@@ -266,7 +269,7 @@ function center_map(map, lon, lat) {
     }
     //layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
     console.log(map.div);
-    map.setCenter(lonLat, 12);
+    map.setCenter(lonLat, 18);
 }
 
 // This function will load the marker of the city, and center the map on it
@@ -786,6 +789,13 @@ pybossa.presentTask(function(task, deferred){
                     $("#point").addClass("disabled");
                 }
             });
+
+            $("#dontKnow").off('click').on('click', function(){
+                $("#geoBtn").show();
+                $("#stepbar").css('width', '66%');
+                loc = {"lon": "dontKnow", "lat":"dontKnow"};
+            });
+
 
             task.map_canvas.show();
             
