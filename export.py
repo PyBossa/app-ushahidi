@@ -110,15 +110,19 @@ class my_daemon(Daemon):
             print('Running against PyBosssa instance at: %s' % self.options.api_url)
             print('Using API-KEY: %s' % self.options.api_key)
 
-        if (self.options.results):
+        if (self.options.app):
+            app_name = self.options.app
+        else:
+            app_name = 'ushahidi'
 
-            app = pbclient.find_app(short_name='ushahidi')[0]
+        if (self.options.results):
+            app = pbclient.find_app(short_name=app_name)[0]
 
         # Connect to the server
         connection = MongoClient('localhost', 27017)
 
         # Create DB
-        db = connection.ushahidi
+        db = connection[app_name]
         # Now get the task runs
         print "Creating CSV file"
         with open("/tmp/results.csv", "a+b") as myfile:
@@ -262,6 +266,7 @@ if __name__ == "__main__":
     parser.add_option("--start", action="store_true", dest="start")
     parser.add_option("--stop", action="store_true", dest="stop")
     parser.add_option("--restart", action="store_true", dest="restart")
+    parser.add_option("--app", dest="app", help="App name")
 
     (options, args) = parser.parse_args()
 
