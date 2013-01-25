@@ -90,7 +90,7 @@
       <div id="categories">
           <hr>
           <h3>Step 1: Categorize the report <small>add as many categories as you need</small></h3>
-          <select id="category">
+          <!--<select id="category">
             <option>Select a category...</option>
             <option>ballot + results</option>
             <option>dangerous speech</option>
@@ -101,8 +101,8 @@
             <option>security</option>
             <option>urgent</option>
             <option>needs translation</option>
-          </select>
-          <select id="sub-categories" style="display:none"></select>
+          </select>-->
+          <!--<select id="sub-categories" style="display:none"></select>-->
       </div>
       <div id="answers"></div>
       <button id="catBtn" class="btn btn-primary" style="display:none">Done! Go to Step 2</button>
@@ -179,68 +179,70 @@
 <script src="http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
 var appname = 'ushahidi';
-var answer = {};
+var answer = [];
 var loc = {};
 //var map;
-var sub_ballot_plus_results = ['provisional results',
-                           'ballot box stuffing',
-                           'tampering with ballot box',
-                           'spoilt ballot papers not preserved for review',
-                           'ballot transport issues',
-                           'ballot boxes destroyed',
-                           'counting disrupted',
-                           'ballots not counted in a transparent manner',
-                           'issue with results delivery/communication',
-                           'errors or omission in counting',
-                           'disagree with declared results',];
+//var sub_ballot_plus_results = ['provisional results',
+//                           'ballot box stuffing',
+//                           'tampering with ballot box',
+//                           'spoilt ballot papers not preserved for review',
+//                           'ballot transport issues',
+//                           'ballot boxes destroyed',
+//                           'counting disrupted',
+//                           'ballots not counted in a transparent manner',
+//                           'issue with results delivery/communication',
+//                           'errors or omission in counting',
+//                           'disagree with declared results',];
+//
+//var sub_dangerous_speech = ['messages including dangerous speech'];
+//
+//var sub_leadership = ['education',
+//                  'infrastructrure',
+//                  'unemployment',
+//                  'governance',];
+//
+//var sub_polling_station_issues = ['voting suspended',
+//                              'ineligible voters allowed to vote',
+//                              'wrong/inadequate voting materials',
+//                              'illiterate voters not assisted',
+//                              'voter impoersonation',
+//                              'voter assister not taking oath of secrecy',
+//                              'vote buying or bribery',
+//                              'partisan polling officials',
+//                              'campaigning at the polling station',
+//                              'polling station ran out of ballot papers',
+//                              'observers/media not granted access',
+//                              'polling offcials refuse to share information with accredited observers',
+//                              'polling station substandard (not numbered properly, not adequaletly lit)',
+//                              'absence of IEBC officials at polling station at opening',
+//                              'no presence of security officsers at polling station',
+//                              'voter importation',];
+//
+//var sub_positive_events = ['police peace efforts',
+//                       'civilian peace efforts',
+//                       'everything fine'];
+//var sub_pre_election =  ['campaign promises',
+//                         'voter education',
+//                         'voter registration',
+//                         'nominations'];
+//
+//var sub_security = ['police violence',
+//                    'intimidation or harassment',
+//                    'civilian violence',
+//                    'police arrest',]
+//var categories = {
+//    'security': {'sub-categories': sub_security},
+//    'pre-election': {'sub-categories': sub_pre_election},
+//    'polling station issues': {'sub-categories': sub_polling_station_issues},
+//    'leadership': {'sub-categories': sub_leadership},
+//    'dangerous speech': {'sub-categories': sub_dangerous_speech},
+//    'ballot + results': {'sub-categories': sub_ballot_plus_results},
+//    'possitive events': {'sub-categories': sub_positive_events},
+//    'urgent': {},
+//    'needs translation': {},
+//};
 
-var sub_dangerous_speech = ['messages including dangerous speech'];
-
-var sub_leadership = ['education',
-                  'infrastructrure',
-                  'unemployment',
-                  'governance',];
-
-var sub_polling_station_issues = ['voting suspended',
-                              'ineligible voters allowed to vote',
-                              'wrong/inadequate voting materials',
-                              'illiterate voters not assisted',
-                              'voter impoersonation',
-                              'voter assister not taking oath of secrecy',
-                              'vote buying or bribery',
-                              'partisan polling officials',
-                              'campaigning at the polling station',
-                              'polling station ran out of ballot papers',
-                              'observers/media not granted access',
-                              'polling offcials refuse to share information with accredited observers',
-                              'polling station substandard (not numbered properly, not adequaletly lit)',
-                              'absence of IEBC officials at polling station at opening',
-                              'no presence of security officsers at polling station',
-                              'voter importation',];
-
-var sub_positive_events = ['police peace efforts',
-                       'civilian peace efforts',
-                       'everything fine'];
-var sub_pre_election =  ['campaign promises',
-                         'voter education',
-                         'voter registration',
-                         'nominations'];
-
-var sub_security = ['police violence',
-                    'intimidation or harassment',
-                    'civilian violence',
-                    'police arrest',]
-var categories = {
-    'security': {'sub-categories': sub_security},
-    'pre-election': {'sub-categories': sub_pre_election},
-    'polling station issues': {'sub-categories': sub_polling_station_issues},
-    'leadership': {'sub-categories': sub_leadership},
-    'dangerous speech': {'sub-categories': sub_dangerous_speech},
-    'ballot + results': {'sub-categories': sub_ballot_plus_results},
-    'possitive events': {'sub-categories': sub_positive_events},
-    'urgent': {},
-    'needs translation': {},
-};
+var categories = [];
 
 
 function registerEvents(layer, task, deferred) {
@@ -603,6 +605,19 @@ pybossa.taskLoaded(function(task, deferred){
             task.map.addControl(task.drawControls[key]);
         }
 
+
+        // Configure the Categories for this task
+        var select = $("<select/>", {'id': "category_" + task.id});
+        select.append("<option value='Nan'>Select one Category...</option>");
+        var l = task.info.categories.length;
+        for(i=0; i<l; i++) {
+            var cat = task.info.categories[i]['category'];
+            if (cat['parent_id'] == '0') {
+                select.append("<option value=" + cat['id'] + ">" + cat['title'] + "</option>");
+            }
+        }
+        task.select = select;
+
         deferred.resolve(task);
         }
         else {
@@ -612,23 +627,20 @@ pybossa.taskLoaded(function(task, deferred){
 
 });
 
-function show_sub_categories(selected) {
-    if (selected in categories) {
-        var select = $("select#sub-categories");
-        select.html("");
-        if ('sub-categories' in categories[selected]) {
-            var l = categories[selected]['sub-categories'].length;
-            select.append('<option>Select a sub-category...</option>');
-            for(i=0;i<l;i++) {
-                select.append('<option>' + categories[selected]['sub-categories'][i] + '</option>');
-            }
-            $("#sub-categories").show();
-        }
-        else {
-            $("#sub-categories").hide();
-            add_cat_subcat();
+function show_sub_categories(cat_id, task) {
+    var l = task.info.categories.length;
+    var select = $("<select/>", {"id": "sub-categories_" + task.id});
+    select.append("<option value='Nan'>Select one Sub-Category...</option>");
+    for(i=0;i<l;i++) {
+        var cat = task.info.categories[i];
+        if (cat['category']['parent_id'] === cat_id) {
+            select.append("<option value="+ cat['category']['id'] + ">"+ cat['category']['title'] + "</option>"); 
         }
     }
+    select.change(function(){
+        add_cat_subcat(task);
+    });
+    task.selectSubCat = select;
 }
 
 function remove_cat_subcat(){
@@ -658,31 +670,38 @@ function remove_cat_subcat(){
        }
 }
 
-function add_cat_subcat() {
-    var cat = $("select#category").children(":selected").html();
-    var sub_cat = $("select#sub-categories").children(":selected").html();
+function add_cat_subcat(task) {
+    var selected_cat, selected_sub_cat;
+    var cat_id = $("select#category_" + task.id).children(":selected").val();
+    var sub_cat_id = $("select#sub-categories_" + task.id).children(":selected").val();
     var p = $("<p/>");
     var btn = $("<button/>", {html:"<i class='icon-trash'></i> ", "class":"btn btn-small btn-dal"});
     var span = $("<span/>");
     var add_item = false;
 
-    if (cat !="Select a category...") {
-        if ((cat == 'urgent') || (cat =='needs translation')) { 
-            if ( !(cat in answer) ) {
-                answer[cat]={'sub-categories': []};
-                add_item = true;
+    if (cat_id !="Nan") {
+        var l = task.info.categories.length;
+        for(i=0;i<l;i++) {
+            var cat = task.info.categories[i];
+            if (cat['category']['id'] === cat_id) {
+                selected_cat = cat;
+                if (answer.indexOf(cat_id) ==-1) {
+                    add_item = true;
+                    answer.push(cat_id)
+                }
+                break;
             }
         }
-        else {
-            if (cat in answer) {
-                if ( answer[cat]['sub-categories'].indexOf(sub_cat) == -1 ) {
-                    answer[cat]['sub-categories'].push(sub_cat);
+
+        for(i=0;i<l;i++) {
+            var cat = task.info.categories[i];
+            if (cat['category']['id'] === sub_cat_id) {
+                selected_sub_cat = cat;
+                if (answer.indexOf(sub_cat_id) ==-1) {
                     add_item = true;
+                    answer.push(sub_cat_id)
                 }
-            }
-            else {
-                answer[cat]={'sub-categories': [sub_cat]};
-                add_item = true;
+                break;
             }
         }
     }
@@ -696,25 +715,30 @@ function add_cat_subcat() {
                 $("#step2").show();
             });
         }
-        if ((cat !="Select a category...") && (sub_cat)) {
-            var id = cat + "QQQ" + sub_cat;
+        if ((cat_id !="Nan") && (sub_cat_id !="Nan")) {
+            var id = selected_cat['category']['id'] + "QQQ" + selected_sub_cat['category']['id'];
+            //var id = cat + "QQQ" + sub_cat;
             p.attr('id', id);
             btn.attr('id', id);
             p.append(btn);
-            span.html(" <strong>" + cat + "</strong> &rarr; " + sub_cat ); 
+            span.html(" <strong>" + selected_cat['category']['title'] + "</strong> &rarr; " + selected_sub_cat['category']['title'] ); 
+            //span.html(" <strong>" + cat + "</strong> &rarr; " + sub_cat ); 
             p.append(span);
         }
         else {
             var id = cat + "QQQ";
+            var id = selected_cat['category']['id'] + "QQQ";
             p.attr('id', id);
             btn.attr('id', id);
             p.append(btn);
-            span.html(" <strong>" + cat + "</strong>"); 
+            span.html(" <strong>" + selected_cat['category']['title'] + "</strong>" ); 
+            //span.html(" <strong>" + cat + "</strong>"); 
             p.append(span);
         }
     $("#answers").append(p);
     btn.click(remove_cat_subcat);
     $("#stepbar").css('width', '33%');
+    console.log(answer);
     }
 }
 
@@ -769,6 +793,7 @@ pybossa.presentTask(function(task, deferred){
             $("#incident>#title").html(task.info.incident.title);
             $("#incident>#date").html(task.info.incident.date);
             $("#incident>#description").html(replaceURLWithHTMLLinks(task.info.incident.description));
+            $("#categories").append(task.select);
             // Configure the Search actions for the button and input field
             $("#searchBtn").off('click').on('click', function(){
                 search(task.map);
@@ -826,33 +851,45 @@ pybossa.presentTask(function(task, deferred){
 
             $("select#category option:eq(0)").prop("selected", true);
             // Add some logic for the categories
-            $("select#category").change(function(){
-                var cat = $(this).children(":selected").html();
-                show_sub_categories(cat);
+            $("select#category_" + task.id).change(function(){
+                $("#sub-categories_" + task.id).remove();
+                var cat = $(this).children(":selected").val();
+                show_sub_categories(cat, task);
+                $("#categories").append(task.selectSubCat);
             });
             // Add category and sub-category to the possible answers list
-            $("select#sub-categories").change(function(){
-                var sub_cat = $(this).children(":selected").html();
-                add_cat_subcat();
-            });
+            //$("select#subcategories_" + task.id).change(function(){
+            //    console.log("Hoal");
+            //    var sub_cat = $(this).children(":selected").val();
+            //    add_cat_subcat(task);
+            //});
 
             $("#geoBtn").off('click').on('click', function(){
                 $("#stepbar").css("width", "100%");
                 $("span#step").html(3);
                 $("#step2").hide();
                 $("#step3").show();
-                for(var cat in answer) {
-                    var li = $("<li/>", {id:cat, text:cat});
-                    $("#review").append(li);
-                    var l = answer[cat]['sub-categories'].length;
-                    if ( l > 0) {
+
+             var l_a = answer.length;
+             var l = task.info.categories.length;
+
+            for(i=0;i<l_a;i++){
+                for(j=0;j<l;j++) {
+                    var cat = task.info.categories[j];
+                    if( (cat['category']['id'] == answer[i]) && (cat['category']['parent_id']==0) ){
+                        var li = $("<li/>", {id: "cat_" + answer[i], text: cat['category']['title']});
+                        $("#review").append(li)
+                        break;
+                    }
+                    if( (cat['category']['id'] == answer[i]) && (cat['category']['parent_id']!=0) ){
                         var ul = $("<ul/>");
-                        for(i=0;i<l;i++) {
-                            ul.append("<li>" + answer[cat]['sub-categories'][i] +"</li>");
-                        }
-                        li.append(ul);
+                        ul.append("<li>" + cat['category']['title'] +"</li>");
+                        $("#review").append(ul);
+                        break;
                     }
                 }
+            }
+                
 
                 if (Object.keys(loc).length > 0) {
                     $("#reviewLoc").append("<p><strong>Incident Latitude:</strong> " + loc['lat'] + "</p>");

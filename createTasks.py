@@ -20,9 +20,16 @@
 import json
 from optparse import OptionParser
 import pbclient
+import requests
 
 
-def task_formatter(app_config, row, n_answers):
+def get_categories(url="http://uchaguzi.co.ke/api?task=categories"):
+    """Gets Ushahidi categories from the server"""
+    r = requests.get(url)
+    categories = r.json['payload']['categories']
+    return categories
+
+def task_formatter(app_config, row, n_answers, categories):
     """
     Creates tasks for the application
 
@@ -52,10 +59,12 @@ def task_formatter(app_config, row, n_answers):
                     longitude=row[7],
                     approved=row[8],
                     verified=row[9])
+    categories = categories
 
     return dict(question=app_config['question'],
                 n_answers=int(n_answers),
-                incident=incident)
+                incident=incident,
+                categories=categories)
 
 
 if __name__ == "__main__":
@@ -138,6 +147,7 @@ if __name__ == "__main__":
         app.info['thumbnail'] = app_config['thumbnail']
         app.info['tutorial'] = open('tutorial.html').read()
 
+        categories = get_categories()
         pbclient.update_app(app)
         with open('ushahidi.csv', 'rb') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',')
@@ -155,7 +165,8 @@ if __name__ == "__main__":
             for row in csvreader:
                 if row[0] != '#':
                     task_info = task_formatter(app_config, row,
-                                               options.n_answers)
+                                               options.n_answers,
+                                               categories)
                     pbclient.create_task(app.id, task_info)
     else:
         app = pbclient.find_app(short_name=app_config['short_name'])[0]

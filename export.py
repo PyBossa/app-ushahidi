@@ -115,6 +115,11 @@ class my_daemon(Daemon):
         else:
             app_name = 'ushahidi'
 
+        if (self.options.polling):
+            polling_time = float(self.options.polling)
+        else:
+            polling_time = float(1)
+
         if (self.options.csv_file):
             csv_file_name = self.options.csv_file
         else:
@@ -252,7 +257,7 @@ class my_daemon(Daemon):
                                                               limit=limit)
 
                 myfile.flush()
-                time.sleep(10)
+                time.sleep(60 * polling_time)
 
 if __name__ == "__main__":
     daemon = my_daemon('/tmp/daemon-example.pid', stdout="/tmp/out.txt", stderr="/tmp/err.txt")
@@ -273,6 +278,7 @@ if __name__ == "__main__":
     parser.add_option("--stop", action="store_true", dest="stop")
     parser.add_option("--restart", action="store_true", dest="restart")
     parser.add_option("--app", dest="app", help="App name")
+    parser.add_option("--polling", dest="polling", help="Polling time in minutes (default 5 minutes)")
     parser.add_option("-f", "--file", dest="csv_file", help="CSV file to export results")
 
     (options, args) = parser.parse_args()
