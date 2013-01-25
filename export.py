@@ -115,6 +115,12 @@ class my_daemon(Daemon):
         else:
             app_name = 'ushahidi'
 
+        if (self.options.csv_file):
+            csv_file_name = self.options.csv_file
+        else:
+            csv_file_name = "/tmp/results.csv"
+
+
         if (self.options.results):
             app = pbclient.find_app(short_name=app_name)[0]
 
@@ -125,7 +131,7 @@ class my_daemon(Daemon):
         db = connection[app_name]
         # Now get the task runs
         print "Creating CSV file"
-        with open("/tmp/results.csv", "a+b") as myfile:
+        with open(csv_file_name, "a+b") as myfile:
             f = csv.writer(myfile)
             f.writerow(['taskid',
                         'incident id',
@@ -267,6 +273,7 @@ if __name__ == "__main__":
     parser.add_option("--stop", action="store_true", dest="stop")
     parser.add_option("--restart", action="store_true", dest="restart")
     parser.add_option("--app", dest="app", help="App name")
+    parser.add_option("-f", "--file", dest="csv_file", help="CSV file to export results")
 
     (options, args) = parser.parse_args()
 
