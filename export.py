@@ -18,9 +18,12 @@
 
 import copy
 import csv
-import sys, time
+import sys
+import time
+import datetime
 from optparse import OptionParser
 from collections import Counter
+from pymongo import MongoClient
 
 import pbclient
 
@@ -111,23 +114,15 @@ class my_daemon(Daemon):
 
             app = pbclient.find_app(short_name='ushahidi')[0]
 
-        while True:
-            # Do stuff
-            offset = 0
-            limit = 100
-            if self.options.completed:
-                completed_tasks = pbclient.find_tasks(app.id,
-                                                      state="completed",
-                                                      offset=offset,
-                                                      limit=limit)
-            else:
-                completed_tasks = pbclient.find_tasks(app.id,
-                                                      offset=offset,
-                                                      limit=limit)
+        # Connect to the server
+        connection = MongoClient('localhost', 27017)
 
-
-            # Now get the task runs
-            f = csv.writer(open("/tmp/results.csv", "wb"))
+        # Create DB
+        db = connection.ushahidi
+        # Now get the task runs
+        print "Creating CSV file"
+        with open("/tmp/results.csv", "a+b") as myfile:
+            f = csv.writer(myfile)
             f.writerow(['taskid',
                         'incident id',
                         'incident title',
@@ -139,74 +134,10 @@ class my_daemon(Daemon):
                         'longitude',
                         'approved',
                         'verified'])
-
-            while completed_tasks:
-                for t in completed_tasks:
-                    print "Getting answers for task %s: " % t.id
-                    answers = pbclient.find_taskruns(app.id, task_id=int(t.id))
-
-                    if self.options.average:
-                        canonical_answer = copy.deepcopy(answers[0])
-                        canonical_answer.task_id = t.id
-                        canonical_answer.id = 0
-                        canonical_answer.info['category'] = None
-                        canonical_answer.info['location'] = None
-                        canonical_answer.info['latitude'] = None
-                        canonical_answer.info['longitude'] = None
-                        # First Categories and sub-categories
-                        most_common_category = "No canonical result"
-                        most_common_sub_category = None
-                        categories = []
-                        for a in answers:
-                            for cat in a.info['category'].keys():
-                                categories.append(cat)
-                        c = Counter(categories)
-                        if c.most_common()[0][1] >= 2:
-                            most_common_category = c.most_common()[0][0]
-                            sub_categories = []
-                            for a in answers:
-                                for cat in a.info['category'].keys():
-                                    if cat == most_common_category:
-                                        for sc in a.info['category'][cat]['sub-categories']:
-                                            sub_categories.append(sc)
-                            c2 = Counter(sub_categories)
-                            if c2.most_common()[0][1] >= 2:
-                                most_common_sub_category = [ c2.most_common()[0][0] ]
-                            else:
-                                most_common_sub_category = list(c2)
-                        sub_categories = {'sub-categories' : most_common_sub_category}
-                        canonical_answer.info['category'] = {most_common_category: sub_categories}
-                        #print "For task %s the most voted cat and sub-cat are" % t.id
-                        #print "%s -> %s" % (most_common_category, most_common_sub_category)
-
-                        # Second the Location
-                        most_common_location = "No canonical result"
-                        locations = []
-                        for a in answers:
-                            locations.append(a.info['location'])
-                        c = Counter(locations)
-                        if c.most_common()[0][1] >= 2:
-                            most_common_location = c.most_common()[0][0]
-                        canonical_answer.info['location'] = most_common_location
-
-                        # Third the Latitude and Longitude
-                        latitudes = []
-                        longitudes = []
-                        for a in answers:
-                            latitudes.append(float(a.info['latitude']))
-                            longitudes.append(float(a.info['longitude']))
-                        most_common_latitude = float( sum(latitudes)/len(latitudes))
-                        most_common_longitude = float( sum(longitudes)/len(longitudes))
-                        canonical_answer.info['latitude'] = most_common_latitude
-                        canonical_answer.info['longitude'] = most_common_longitude
-                        line = format_csv_row(t,canonical_answer)
-                        f.writerow(line)
-                    else:
-                        for a in answers:
-                            line = format_csv_row(t, a)
-                            f.writerow(line)
-
-                offset = offset + limit
+            while True:
+                # Do stuff
+                offset = 0
+                limit = 100
                 if self.options.completed:
                     completed_tasks = pbclient.find_tasks(app.id,
                                                           state="completed",
@@ -216,12 +147,105 @@ class my_daemon(Daemon):
                     completed_tasks = pbclient.find_tasks(app.id,
                                                           offset=offset,
                                                           limit=limit)
-            time.sleep(30)
 
 
+
+                while completed_tasks:
+                    for t in completed_tasks:
+                        db_task = db.tasks.find_one({"id": t.id,
+                                                     "state": "completed"})
+                        if db_task:
+                            if db_task['saved'] == 0:
+                                print "Getting answers for task %s: " % t.id
+                                answers = pbclient.find_taskruns(app.id, task_id=int(t.id))
+
+                                if self.options.average:
+                                    canonical_answer = copy.deepcopy(answers[0])
+                                    canonical_answer.task_id = t.id
+                                    canonical_answer.id = 0
+                                    canonical_answer.info['category'] = None
+                                    canonical_answer.info['location'] = None
+                                    canonical_answer.info['latitude'] = None
+                                    canonical_answer.info['longitude'] = None
+                                    # First Categories and sub-categories
+                                    most_common_category = "No canonical result"
+                                    most_common_sub_category = None
+                                    categories = []
+                                    for a in answers:
+                                        for cat in a.info['category'].keys():
+                                            categories.append(cat)
+                                    c = Counter(categories)
+                                    if c.most_common()[0][1] >= 2:
+                                        most_common_category = c.most_common()[0][0]
+                                        sub_categories = []
+                                        for a in answers:
+                                            for cat in a.info['category'].keys():
+                                                if cat == most_common_category:
+                                                    for sc in a.info['category'][cat]['sub-categories']:
+                                                        sub_categories.append(sc)
+                                        c2 = Counter(sub_categories)
+                                        if c2.most_common()[0][1] >= 2:
+                                            most_common_sub_category = [c2.most_common()[0][0]]
+                                        else:
+                                            most_common_sub_category = list(c2)
+                                    sub_categories = {'sub-categories':
+                                                      most_common_sub_category}
+                                    canonical_answer.info['category'] = {
+                                        most_common_category: sub_categories}
+
+                                    # Second the Location
+                                    most_common_location = "No canonical result"
+                                    locations = []
+                                    for a in answers:
+                                        locations.append(a.info['location'])
+                                    c = Counter(locations)
+                                    if c.most_common()[0][1] >= 2:
+                                        most_common_location = c.most_common()[0][0]
+                                    canonical_answer.info['location'] = most_common_location
+
+                                    # Third the Latitude and Longitude
+                                    latitudes = []
+                                    longitudes = []
+                                    for a in answers:
+                                        latitudes.append(float(a.info['latitude']))
+                                        longitudes.append(float(a.info['longitude']))
+                                    most_common_latitude = float( sum(latitudes)/len(latitudes))
+                                    most_common_longitude = float( sum(longitudes)/len(longitudes))
+                                    canonical_answer.info['latitude'] = most_common_latitude
+                                    canonical_answer.info['longitude'] = most_common_longitude
+                                    line = format_csv_row(t,canonical_answer)
+                                    print "saving answer"
+                                    f.writerow(line)
+                                    db_task['saved'] = 1
+                                    db.tasks.save(db_task)
+                                else:
+                                    for a in answers:
+                                        print "saving answer"
+                                        line = format_csv_row(t, a)
+                                        f.writerow(line)
+                                        db_task['saved'] = 1
+                                        db.tasks.save(db_task)
+                        else:
+                            db.tasks.insert({"id": t.id,
+                                             "date": datetime.datetime.utcnow(),
+                                             "state": t.state,
+                                             "saved": 0})
+                    offset = offset + limit
+                    if self.options.completed:
+                        completed_tasks = pbclient.find_tasks(app.id,
+                                                              state="completed",
+                                                              offset=offset,
+                                                              limit=limit)
+                    else:
+                        completed_tasks = pbclient.find_tasks(app.id,
+                                                              offset=offset,
+                                                              limit=limit)
+
+                myfile.flush()
+                time.sleep(10)
 
 if __name__ == "__main__":
-    daemon = my_daemon('/tmp/daemon-example.pid')
+    daemon = my_daemon('/tmp/daemon-example.pid', stdout="/tmp/out.txt", stderr="/tmp/err.txt")
     # Arguments for the application
     usage = "usage: %prog [options]"
     parser = OptionParser(usage)
