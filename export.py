@@ -22,6 +22,7 @@ import sys
 import time
 import datetime
 import time
+import json
 import requests
 from optparse import OptionParser
 from collections import Counter
@@ -138,15 +139,13 @@ class my_daemon(Daemon):
             print('Running against PyBosssa instance at: %s' % self.options.api_url)
             print('Using API-KEY: %s' % self.options.api_key)
 
-        if (self.options.app):
-            app_name = self.options.app
-        else:
-            app_name = 'ushahidi'
-
         if (self.options.polling):
-            polling_time = float(self.options.polling)
+            if (int( self.options.polling )>=5):
+                polling_time = float(self.options.polling)
+            else:
+                polling_time=5
         else:
-            polling_time = float(1)
+            polling_time = float(5)
 
         if (self.options.csv_file):
             csv_file_name = self.options.csv_file
@@ -155,13 +154,13 @@ class my_daemon(Daemon):
 
 
         if (self.options.results):
-            app = pbclient.find_app(short_name=app_name)[0]
+            app = pbclient.find_app(short_name=app_config['short_name'])[0]
 
         # Connect to the server
         connection = MongoClient('localhost', 27017)
 
         # Create DB
-        db = connection[app_name]
+        db = connection[app_config['short_name']]
         # Now get the task runs
         print "Creating CSV file"
         with open(csv_file_name, "a+b") as myfile:
@@ -214,7 +213,6 @@ class my_daemon(Daemon):
                                     canonical_answer.info['longitude'] = None
                                     # First Categories and sub-categories
                                     most_common_category = []
-                                    #most_common_sub_category = None
                                     categories = []
                                     for a in answers:
                                         for cat in a.info['category']:
@@ -227,24 +225,6 @@ class my_daemon(Daemon):
                                             most_common_category.append(cat)
 
                                     canonical_answer.info['category'] = most_common_category
-                                    #if c.most_common()[0][1] >= 2:
-                                    #    most_common_category = c.most_common()[0][0]
-                                    #    sub_categories = []
-                                    #    for a in answers:
-                                    #        for cat in a.info['category']:
-                                    #            if cat == most_common_category:
-                                    #                for sc in a.info['category'][cat]['sub-categories']:
-                                    #                    sub_categories.append(sc)
-                                    #    c2 = Counter(sub_categories)
-                                    #    if c2.most_common()[0][1] >= 2:
-                                    #        most_common_sub_category = [c2.most_common()[0][0]]
-                                    #    else:
-                                    #        most_common_sub_category = list(c2)
-                                    #sub_categories = {'sub-categories':
-                                    #                  most_common_sub_category}
-                                    #canonical_answer.info['category'] = {
-                                    #    most_common_category: sub_categories}
-
                                     # Second the Location
                                     most_common_location = "No canonical result"
                                     locations = []
@@ -275,8 +255,9 @@ class my_daemon(Daemon):
                                     f.writerow(line)
                                     db_task['saved'] = 1
                                     db.tasks.save(db_task)
-                                    print "submitting answer to Ushahidi"
-                                    push_to_ushahidi("http://uchaguzi.co.ke/", canonical_answer)
+                                    if options.ushahidi_server:
+                                        print "submitting answer to Ushahidi"
+                                        push_to_ushahidi(options.usahidi_server, canonical_answer)
                                 else:
                                     for a in answers:
                                         print "saving answer"
@@ -324,10 +305,20 @@ if __name__ == "__main__":
     parser.add_option("--app", dest="app", help="App name")
     parser.add_option("--polling", dest="polling", help="Polling time in minutes (default 5 minutes)")
     parser.add_option("-f", "--file", dest="csv_file", help="CSV file to export results")
+    parser.add_option("-u", "--usuahidi-server", dest="ushahidi_server", help="Ushahidi server")
 
     (options, args) = parser.parse_args()
 
     daemon.options = options
+
+    # Load app details
+    try:
+        app_json = open('app.json')
+        app_config = json.load(app_json)
+        app_json.close()
+    except IOError as e:
+        print "app.json is missing! Please create a new one"
+        exit(0)
 
     if options.start:
         print "Starting daemon"

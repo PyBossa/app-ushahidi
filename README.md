@@ -14,7 +14,7 @@ associated API-KEY with your account.
 
 Then, you will need to install several dependencies:
 
-    pip install -e requirements.txt
+    pip install -r requirements.txt
 
 Now you are done to start using it!
 
@@ -27,7 +27,11 @@ extracts the reports in a CSV file.
 This CSV file can be used to import the tasks into the PyBossa application. All
 you have to do is to run the following command:
 
-python createTasks.py -s SERVER -k API_KEY -c --data CSV_FILE
+python createTasks.py -s SERVER -k API_KEY -c --data CSV_FILE --usahidi-server
+USHAHIDI
+
+NOTE: You need to specify he Ushahidi server because the Categories and
+sub-categories will be obtained from that server.
 
 This will create the application, the tutorial and upload the data to the
 PyBossa server.
@@ -85,23 +89,30 @@ latitude and longitude values.
 
 This application is really simple to use, just run it like this:
 
-python getResults.py -s PYBOSSA -k API-KEY 
+python getResults.py -s PYBOSSA -k API-KEY -r
 
 And you will get all the results, even for not completed tasks, written to the 
 file **results.csv**. If you only want the completed tasks, run it with this
 argument:
 
-python getResults.py -s PYBOSSA -k API-KEY -c
+python getResults.py -s PYBOSSA -k API-KEY -c -r
 
 And if you want to compute the canonical results:
 
-python getResults.py -s PYBOSSA -k API-KEY -c -a
+python getResults.py -s PYBOSSA -k API-KEY -c -a -r
 
 While this application is useful, you will need to run it by hand (or using
 a Cron job) every time you want the latest results in the CSV file. If you want
 to automate this process, check the next section.
 
+NOTE: you can change the name of the file where you want to export the results
+by using the -f argument.
+
 ### Using export.py for extracting data automatically
+
+NOTE: You will need also to install the mongoDB server if you want to use this
+method, as the application keeps a record of which tasks have been already
+saved.
 
 This application is a service/daemon that will run in the background polling
 the PyBossa server for new answers and saving them into a CSV file as well as

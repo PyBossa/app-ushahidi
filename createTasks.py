@@ -23,8 +23,9 @@ import pbclient
 import requests
 
 
-def get_categories(url="http://uchaguzi.co.ke/api?task=categories"):
+def get_categories(url):
     """Gets Ushahidi categories from the server"""
+    url = url + "/api?task=categories"
     r = requests.get(url)
     categories = r.json['payload']['categories']
     return categories
@@ -107,6 +108,16 @@ if __name__ == "__main__":
                       help="Number of answers per task",
                       metavar="N-ANSWERS")
 
+    parser.add_option("-u", "--ushahidi-server",
+                      dest="ushahidi_server",
+                      help="Ushahidi server",
+                      metavar="Ushahidi server")
+
+    parser.add_option("-d", "--data",
+                      dest="csv_file",
+                      help="CSV file with incident reports to import",
+                      metavar="CSV file")
+
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose")
     (options, args) = parser.parse_args()
 
@@ -129,6 +140,10 @@ if __name__ == "__main__":
     else:
         pbclient.set('api_key', options.api_key)
 
+    if not options.ushahidi_server:
+        parser.error("You must supply the Ushahidi server from where you want \
+                     to categorize the reports")
+
     if (options.verbose):
         print('Running against PyBosssa instance at: %s' % options.api_url)
         print('Using API-KEY: %s' % options.api_key)
@@ -147,9 +162,13 @@ if __name__ == "__main__":
         app.info['thumbnail'] = app_config['thumbnail']
         app.info['tutorial'] = open('tutorial.html').read()
 
-        categories = get_categories()
+        categories = get_categories(options.ushahidi_server)
         pbclient.update_app(app)
-        with open('ushahidi.csv', 'rb') as csvfile:
+
+        if not options.csv_file:
+            options.csv = 'ushahidi.csv'
+
+        with open(options.csv_file, 'rb') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',')
             # Each row has the following format
             # # <- ID
@@ -172,7 +191,9 @@ if __name__ == "__main__":
         app = pbclient.find_app(short_name=app_config['short_name'])[0]
         if options.add_more_tasks:
             import csv
-            with open('ushahidi.csv', 'rb') as csvfile:
+            if not options.csv_file:
+                options.csv_file = 'ushahidi.csv'
+            with open(options.csv_file, 'rb') as csvfile:
                 csvreader = csv.reader(csvfile, delimiter=',')
                 # Each row has the following format
                 # # <- ID

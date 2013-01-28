@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import json
 from optparse import OptionParser
 from collections import Counter
 
@@ -57,7 +58,11 @@ def format_csv_row(t, a):
 
     # Answers
     if a.info['category']:
-        line.append(a.info['category'])
+        tmp = ""
+        for c in a.info['category']:
+            if c:
+                tmp += c + ","
+        line.append(tmp)
     else:
         line.append(0)
 
@@ -98,8 +103,18 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose")
     parser.add_option("-c", "--completed", action="store_true", dest="completed")
     parser.add_option("-a", "--average", action="store_true", dest="average")
+    parser.add_option("-f", "--file", dest="csv_file", help="CSV file to export results")
 
     (options, args) = parser.parse_args()
+
+    # Load app details
+    try:
+        app_json = open('app.json')
+        app_config = json.load(app_json)
+        app_json.close()
+    except IOError as e:
+        print "app.json is missing! Please create a new one"
+        exit(0)
 
     if not options.api_url:
         options.api_url = 'http://localhost:5000'
@@ -119,7 +134,7 @@ if __name__ == "__main__":
         offset = 0
         limit = 100
 
-        app = pbclient.find_app(short_name='ushahidi')[0]
+        app = pbclient.find_app(short_name=app_config['short_name'])[0]
         if options.completed:
             completed_tasks = pbclient.find_tasks(app.id,
                                                   state="completed",
@@ -132,7 +147,10 @@ if __name__ == "__main__":
 
         # Now get the task runs
         import csv
-        f = csv.writer(open("results.csv", "wb"))
+        if not (options.csv_file):
+            options.csv_file = "results.csv"
+
+        f = csv.writer(open(options.csv_file, "wb"))
         f.writerow(['taskid',
                     'incident id',
                     'incident title',
@@ -159,31 +177,19 @@ if __name__ == "__main__":
                     canonical_answer.info['latitude'] = None
                     canonical_answer.info['longitude'] = None
                     # First Categories and sub-categories
-                    most_common_category = "No canonical result"
-                    most_common_sub_category = None
+                    most_common_category = []
                     categories = []
                     for a in answers:
-                        for cat in a.info['category'].keys():
+                        for cat in a.info['category']:
                             categories.append(cat)
                     c = Counter(categories)
-                    if c.most_common()[0][1] >= 2:
-                        most_common_category = c.most_common()[0][0]
-                        sub_categories = []
-                        for a in answers:
-                            for cat in a.info['category'].keys():
-                                if cat == most_common_category:
-                                    for sc in a.info['category'][cat]['sub-categories']:
-                                        sub_categories.append(sc)
-                        c2 = Counter(sub_categories)
-                        if c2.most_common()[0][1] >= 2:
-                            most_common_sub_category = [ c2.most_common()[0][0] ]
-                        else:
-                            most_common_sub_category = list(c2)
-                    sub_categories = {'sub-categories' : most_common_sub_category}
-                    canonical_answer.info['category'] = {most_common_category: sub_categories}
-                    #print "For task %s the most voted cat and sub-cat are" % t.id
-                    #print "%s -> %s" % (most_common_category, most_common_sub_category)
+                    for item in c.most_common():
+                        cat = item[0]
+                        votes = item[1]
+                        if votes >= (int(t.n_answers)*0.95):
+                            most_common_category.append(cat)
 
+                    canonical_answer.info['category'] = most_common_category
                     # Second the Location
                     most_common_location = "No canonical result"
                     locations = []
@@ -198,13 +204,19 @@ if __name__ == "__main__":
                     latitudes = []
                     longitudes = []
                     for a in answers:
-                        latitudes.append(float(a.info['latitude']))
-                        longitudes.append(float(a.info['longitude']))
-                    most_common_latitude = float( sum(latitudes)/len(latitudes))
-                    most_common_longitude = float( sum(longitudes)/len(longitudes))
-                    canonical_answer.info['latitude'] = most_common_latitude
-                    canonical_answer.info['longitude'] = most_common_longitude
+                        if a.info['latitude'] != 'dontKnow' and a.info['longitude']!= 'dontKnow':
+                            latitudes.append(float(a.info['latitude']))
+                            longitudes.append(float(a.info['longitude']))
+                    if (len(latitudes)>0) and (len(longitudes)>0):
+                        most_common_latitude = float( sum(latitudes)/len(latitudes))
+                        most_common_longitude = float( sum(longitudes)/len(longitudes))
+                        canonical_answer.info['latitude'] = most_common_latitude
+                        canonical_answer.info['longitude'] = most_common_longitude
+                    else:
+                        canonical_answer.info['latitude'] = None
+                        canonical_answer.info['longitude'] = None
                     line = format_csv_row(t,canonical_answer)
+                    print "saving answer"
                     f.writerow(line)
                 else:
                     for a in answers:
