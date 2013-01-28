@@ -87,9 +87,9 @@
 
 <div id="step1" class="row skeleton">
     <div class="span12">
+        <hr>
+        <h3>Step 1: Categorize the report <small>add as many categories as you need</small></h3>
       <div id="categories">
-          <hr>
-          <h3>Step 1: Categorize the report <small>add as many categories as you need</small></h3>
           <!--<select id="category">
             <option>Select a category...</option>
             <option>ballot + results</option>
@@ -270,7 +270,7 @@ function center_map(map, lon, lat) {
         }
     }
     //layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
-    console.log(map.div);
+    //console.log(map.div);
     map.setCenter(lonLat, 18);
 }
 
@@ -633,7 +633,10 @@ function show_sub_categories(cat_id, task) {
     select.append("<option value='Nan'>Select one Sub-Category...</option>");
     for(i=0;i<l;i++) {
         var cat = task.info.categories[i];
-        if (cat['category']['parent_id'] === cat_id) {
+        if ((cat['category']['id'] == cat_id) && (cat['category']['title'] == 'URGENT')){
+            add_cat_subcat(task);
+        }
+        else if (cat['category']['parent_id'] == cat_id) {
             select.append("<option value="+ cat['category']['id'] + ">"+ cat['category']['title'] + "</option>"); 
         }
     }
@@ -659,12 +662,9 @@ function remove_cat_subcat(){
             var cat = item[0]
             delete answer[cat];
         }
-        console.log(answer);
         var id = "p#" + $(this).attr('id');
-        console.log(id);
        $(id).remove();
        $(this).parent().remove();
-       console.log(answer);
        if (Object.keys(answer).length == 0) {
            $("#catBtn").hide();
        }
@@ -715,7 +715,7 @@ function add_cat_subcat(task) {
                 $("#step2").show();
             });
         }
-        if ((cat_id !="Nan") && (sub_cat_id !="Nan")) {
+        if ((cat_id !="Nan") && (typeof sub_cat_id !="undefined")) {
             var id = selected_cat['category']['id'] + "QQQ" + selected_sub_cat['category']['id'];
             //var id = cat + "QQQ" + sub_cat;
             p.attr('id', id);
@@ -738,7 +738,6 @@ function add_cat_subcat(task) {
     $("#answers").append(p);
     btn.click(remove_cat_subcat);
     $("#stepbar").css('width', '33%');
-    console.log(answer);
     }
 }
 
@@ -746,6 +745,7 @@ function reset_forms(task) {
     // HTML DOM
     // Step 1
     $("div#answers").empty();
+    $("div#categories").empty();
     // Step 2
     $("#locationRef").val("");
     $("#searching").hide();
@@ -805,6 +805,8 @@ pybossa.presentTask(function(task, deferred){
                     search(task.map);
                 }
             });
+
+            answer.length=0;
 
 
             $("#point").off('click').on('click', function(){

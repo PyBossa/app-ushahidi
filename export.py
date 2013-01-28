@@ -21,6 +21,8 @@ import csv
 import sys
 import time
 import datetime
+import time
+import requests
 from optparse import OptionParser
 from collections import Counter
 from pymongo import MongoClient
@@ -28,6 +30,28 @@ from pymongo import MongoClient
 import pbclient
 
 from daemon import Daemon
+
+def push_to_ushahidi(server, data):
+    """Push an incident to an Ushahidi server"""
+    payload = {}
+    payload['incident_title'] = data.info['title']
+    payload['incident_description'] = data.info['description']
+
+    tmp = time.strptime(data.info['date'], "%Y-%m-%d %H:%M:%S")
+
+    payload['incident_date'] = time.strftime("%Y-%m-%d", tmp)
+    payload['incident_hour'] = time.strftime("%H", tmp)
+    payload['incident_minute'] = time.strftime("%M", tmp)
+    payload['incident_ampm'] = time.strftime("%p", tmp)
+    payload['incident_category'] = data.info['category']
+    payload['latitude'] = data.info['latitude']
+    payload['longitude'] = data.info['longitude']
+    payload['location_name'] = data.info['location']
+
+    r = requests.post(server + "?task=report", payload)
+    print r.url
+    print r.status_code
+
 
 def format_csv_row(t, a):
     line = []
@@ -63,7 +87,11 @@ def format_csv_row(t, a):
 
     # Answers
     if a.info['category']:
-        line.append(a.info['category'])
+        tmp = ""
+        for c in a.info['category']:
+            if c:
+                tmp += c + ","
+        line.append(tmp)
     else:
         line.append(0)
 
@@ -151,6 +179,8 @@ class my_daemon(Daemon):
                         'verified'])
             while True:
                 # Do stuff
+                # Update task status by requesting new tasks
+                requests.get(self.options.api_url + "/api/app/" + str(app.id) + "/newtask")
                 offset = 0
                 limit = 100
                 if self.options.completed:
@@ -183,30 +213,37 @@ class my_daemon(Daemon):
                                     canonical_answer.info['latitude'] = None
                                     canonical_answer.info['longitude'] = None
                                     # First Categories and sub-categories
-                                    most_common_category = "No canonical result"
-                                    most_common_sub_category = None
+                                    most_common_category = []
+                                    #most_common_sub_category = None
                                     categories = []
                                     for a in answers:
-                                        for cat in a.info['category'].keys():
+                                        for cat in a.info['category']:
                                             categories.append(cat)
                                     c = Counter(categories)
-                                    if c.most_common()[0][1] >= 2:
-                                        most_common_category = c.most_common()[0][0]
-                                        sub_categories = []
-                                        for a in answers:
-                                            for cat in a.info['category'].keys():
-                                                if cat == most_common_category:
-                                                    for sc in a.info['category'][cat]['sub-categories']:
-                                                        sub_categories.append(sc)
-                                        c2 = Counter(sub_categories)
-                                        if c2.most_common()[0][1] >= 2:
-                                            most_common_sub_category = [c2.most_common()[0][0]]
-                                        else:
-                                            most_common_sub_category = list(c2)
-                                    sub_categories = {'sub-categories':
-                                                      most_common_sub_category}
-                                    canonical_answer.info['category'] = {
-                                        most_common_category: sub_categories}
+                                    for item in c.most_common():
+                                        cat = item[0]
+                                        votes = item[1]
+                                        if votes >= (int(t.n_answers)*0.95):
+                                            most_common_category.append(cat)
+
+                                    canonical_answer.info['category'] = most_common_category
+                                    #if c.most_common()[0][1] >= 2:
+                                    #    most_common_category = c.most_common()[0][0]
+                                    #    sub_categories = []
+                                    #    for a in answers:
+                                    #        for cat in a.info['category']:
+                                    #            if cat == most_common_category:
+                                    #                for sc in a.info['category'][cat]['sub-categories']:
+                                    #                    sub_categories.append(sc)
+                                    #    c2 = Counter(sub_categories)
+                                    #    if c2.most_common()[0][1] >= 2:
+                                    #        most_common_sub_category = [c2.most_common()[0][0]]
+                                    #    else:
+                                    #        most_common_sub_category = list(c2)
+                                    #sub_categories = {'sub-categories':
+                                    #                  most_common_sub_category}
+                                    #canonical_answer.info['category'] = {
+                                    #    most_common_category: sub_categories}
 
                                     # Second the Location
                                     most_common_location = "No canonical result"
@@ -222,17 +259,24 @@ class my_daemon(Daemon):
                                     latitudes = []
                                     longitudes = []
                                     for a in answers:
-                                        latitudes.append(float(a.info['latitude']))
-                                        longitudes.append(float(a.info['longitude']))
-                                    most_common_latitude = float( sum(latitudes)/len(latitudes))
-                                    most_common_longitude = float( sum(longitudes)/len(longitudes))
-                                    canonical_answer.info['latitude'] = most_common_latitude
-                                    canonical_answer.info['longitude'] = most_common_longitude
+                                        if a.info['latitude'] != 'dontKnow' and a.info['longitude']!= 'dontKnow':
+                                            latitudes.append(float(a.info['latitude']))
+                                            longitudes.append(float(a.info['longitude']))
+                                    if (len(latitudes)>0) and (len(longitudes)>0):
+                                        most_common_latitude = float( sum(latitudes)/len(latitudes))
+                                        most_common_longitude = float( sum(longitudes)/len(longitudes))
+                                        canonical_answer.info['latitude'] = most_common_latitude
+                                        canonical_answer.info['longitude'] = most_common_longitude
+                                    else:
+                                        canonical_answer.info['latitude'] = None
+                                        canonical_answer.info['longitude'] = None
                                     line = format_csv_row(t,canonical_answer)
                                     print "saving answer"
                                     f.writerow(line)
                                     db_task['saved'] = 1
                                     db.tasks.save(db_task)
+                                    print "submitting answer to Ushahidi"
+                                    push_to_ushahidi("http://uchaguzi.co.ke/", canonical_answer)
                                 else:
                                     for a in answers:
                                         print "saving answer"
