@@ -124,8 +124,14 @@
             </div>
             <div class="span4">
                 <div class="input-append">
+                    <label for="locationRef">Search for Street, City, or Country</label>
                     <input id="locationRef" class="span4" type="text" placeholder="Street, City, Country">
                     <button class="btn" type="button" id="searchBtn"><i class="icon-search"></i> Search!</button>
+                </div>
+                <div class="input-append">
+                    <label for="lonLatRef">Or Longitude and Latitude</label>
+                    <input id="lonLatRef" class="span4" type="text" placeholder="Longitude, Latitude">
+                    <button class="btn" type="button" id="searchLonLat"><i class="icon-search"></i> Search!</button>
                 </div>
                 <div id="controls" style="margin-top:5px;">
                     <button id="point"    class="btn btn-inverse">
@@ -181,6 +187,11 @@
 var appname = 'ushahidi';
 var answer = [];
 var loc = {};
+
+// See http://stackoverflow.com/questions/18082/validate-numbers-in-javascript-isnumeric
+function isNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}
 //var map;
 //var sub_ballot_plus_results = ['provisional results',
 //                           'ballot box stuffing',
@@ -271,6 +282,36 @@ function center_map(map, lon, lat) {
     }
     //layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
     //console.log(map.div);
+    map.setCenter(lonLat, 18);
+}
+
+function searchLonLat(map) {
+    var tmp = $("#lonLatRef").val().split(",");
+    $("#lon").text(tmp[0]);
+    $("#lat").text(tmp[1]);
+    loc = {"lon":tmp[0], "lat":tmp[1]};
+    var lonLat = new OpenLayers.LonLat(parseFloat(tmp[0]), parseFloat(tmp[1]))
+        .transform(
+            new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+            map.getProjectionObject() // to Spherical Mercator Projection
+        );
+    // Set the marker position
+    // First remove all previous markers
+    for(i=0;i<map.layers.length;i++){
+            var layer = map.layers[i];
+            if(layer.name == 'Incident') {
+                layer.removeAllFeatures();
+            }
+        }
+    point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+    // Add the marker
+    for(i=0;i<map.layers.length;i++){
+            var layer = map.layers[i];
+            if(layer.name == 'Incident') {
+                layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
+            }
+        }
+    // Center the map
     map.setCenter(lonLat, 18);
 }
 
@@ -373,11 +414,13 @@ $("#location").click(
         $("#locationRef").hide();
         $("#geocoding").hide();
         $("#searchBtn").hide();
+        $("#searchLonLat").hide();
     }
     else {
         $("#locationRef").show();
         $("#geocoding").show();
         $("#searchBtn").show();
+        $("#searchLonLat").show();
         // ScrollTo this element
         // See this for further details http://stackoverflow.com/questions/6677035/jquery-scroll-to-element
         $('html, body').animate({
@@ -798,11 +841,45 @@ pybossa.presentTask(function(task, deferred){
             $("#searchBtn").off('click').on('click', function(){
                 search(task.map);
             });
+            $("#lonLatRef").val("");
+            $("#lon").text("-");
+            $("#lat").text("-");
+            $("#searchLonLat").off('click').on('click', function(){
+                var lonLat = $("#lonLatRef").val().split(",");
+                if ((lonLat.length==2) && (isNumber(lonLat[0])) && isNumber(lonLat[1])) {
+                    searchLonLat(task.map);
+                    $("#point").hide();
+                    $("#dontKnow").hide();
+                    $("#geoBtn").show();
+                    task.drawControls['point'].deactivate();
+                }
+                else {
+                        alert("Please, type only the Longitude and Latitude numbers separated by a comma");
+                    }
+
+            });
             // If user presses enter do the search
             $("#locationRef").bind('keypress', function(e){
                 var code = (e.keyCode ? e.keyCode : e.which);
                 if(code == 13) { //Enter keycode
                     search(task.map);
+                }
+            });
+
+            $("#lonLatRef").bind('keypress', function(e){
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if(code == 13) { //Enter keycode
+                    var lonLat = $("#lonLatRef").val().split(",");
+                    if ((lonLat.length==2) && (isNumber(lonLat[0])) && isNumber(lonLat[1])) {
+                        searchLonLat(task.map);
+                        $("#point").hide();
+                        $("#dontKnow").hide();
+                        $("#geoBtn").show();
+                        task.drawControls['point'].deactivate();
+                    }
+                    else {
+                        alert("Please, type only the Longitude and Latitude numbers separated by a comma");
+                    }
                 }
             });
 
@@ -916,6 +993,7 @@ pybossa.presentTask(function(task, deferred){
                         'verified': task.info.incident.verified
                     };
                     pybossa.saveTask(task.id, incident_answer).done(function(){
+                        console.log(incident_answer);
                         reset_forms(task);
                         deferred.resolve();
                     });
