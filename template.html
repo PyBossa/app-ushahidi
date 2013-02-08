@@ -89,21 +89,7 @@
     <div class="span12">
         <hr>
         <h3>Step 1: Categorize the report <small>add as many categories as you need</small></h3>
-      <div id="categories">
-          <!--<select id="category">
-            <option>Select a category...</option>
-            <option>ballot + results</option>
-            <option>dangerous speech</option>
-            <option>leadership</option>
-            <option>polling station issues</option>
-            <option>possitive events</option>
-            <option>pre-election</option>
-            <option>security</option>
-            <option>urgent</option>
-            <option>needs translation</option>
-          </select>-->
-          <!--<select id="sub-categories" style="display:none"></select>-->
-      </div>
+      <div id="categories"></div>
       <div id="answers"></div>
       <button id="catBtn" class="btn btn-primary" style="display:none">Done! Go to Step 2</button>
   </div>
@@ -186,73 +172,11 @@
 <script src="http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
 var appname = 'ushahidi';
-var answer = [];
-var loc = {};
 
 // See http://stackoverflow.com/questions/18082/validate-numbers-in-javascript-isnumeric
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
-//var map;
-//var sub_ballot_plus_results = ['provisional results',
-//                           'ballot box stuffing',
-//                           'tampering with ballot box',
-//                           'spoilt ballot papers not preserved for review',
-//                           'ballot transport issues',
-//                           'ballot boxes destroyed',
-//                           'counting disrupted',
-//                           'ballots not counted in a transparent manner',
-//                           'issue with results delivery/communication',
-//                           'errors or omission in counting',
-//                           'disagree with declared results',];
-//
-//var sub_dangerous_speech = ['messages including dangerous speech'];
-//
-//var sub_leadership = ['education',
-//                  'infrastructrure',
-//                  'unemployment',
-//                  'governance',];
-//
-//var sub_polling_station_issues = ['voting suspended',
-//                              'ineligible voters allowed to vote',
-//                              'wrong/inadequate voting materials',
-//                              'illiterate voters not assisted',
-//                              'voter impoersonation',
-//                              'voter assister not taking oath of secrecy',
-//                              'vote buying or bribery',
-//                              'partisan polling officials',
-//                              'campaigning at the polling station',
-//                              'polling station ran out of ballot papers',
-//                              'observers/media not granted access',
-//                              'polling offcials refuse to share information with accredited observers',
-//                              'polling station substandard (not numbered properly, not adequaletly lit)',
-//                              'absence of IEBC officials at polling station at opening',
-//                              'no presence of security officsers at polling station',
-//                              'voter importation',];
-//
-//var sub_positive_events = ['police peace efforts',
-//                       'civilian peace efforts',
-//                       'everything fine'];
-//var sub_pre_election =  ['campaign promises',
-//                         'voter education',
-//                         'voter registration',
-//                         'nominations'];
-//
-//var sub_security = ['police violence',
-//                    'intimidation or harassment',
-//                    'civilian violence',
-//                    'police arrest',]
-//var categories = {
-//    'security': {'sub-categories': sub_security},
-//    'pre-election': {'sub-categories': sub_pre_election},
-//    'polling station issues': {'sub-categories': sub_polling_station_issues},
-//    'leadership': {'sub-categories': sub_leadership},
-//    'dangerous speech': {'sub-categories': sub_dangerous_speech},
-//    'ballot + results': {'sub-categories': sub_ballot_plus_results},
-//    'possitive events': {'sub-categories': sub_positive_events},
-//    'urgent': {},
-//    'needs translation': {},
-//};
 
 var categories = [];
 
@@ -442,90 +366,6 @@ function loadUserProgress() {
     });
 }
 //
-// Function to submit and save the TaskRun in PyBossa
-function submitTask() {
-    // Get the task-id
-    var taskid = $("#task-id").text();
-    // Get classification:
-    var picture = 0;
-    var video = 0;
-    var location = 0;
-    var other = 0;
-    var pictureLink = null;
-    var videoLink = null;
-    var locationRef = null;
-
-    if ($('#picture').is(':checked')) {
-        picture = 1;
-        console.log($('#pictureLink').val());
-        if ($('#pictureLink').val()) {
-            pictureLink = $("#pictureLink").val();
-        }
-        else {
-            alert("Please, paste the link of the picture");
-            return
-
-        }
-    }
-
-    if ($('#video').is(':checked')) {
-        video = 1;
-        if ($('#videoLink').val()) {
-            videoLink = $("#videoLink").val();
-        }
-        else {
-            alert("Please, paste the link of the video");
-            return
-        }
-    }
-
-    if ($('#location ').is(':checked')) {
-        location = 1;
-        if ($('#locationRef').val()) {
-            locationRef = $("#locationRef").val();
-        }
-        else {
-            alert("Please, paste the location ref of the damage");
-            return
-        }
-        
-        if (incidentLayer.features.length > 0) {
-            // Convert the feature location, the urban park marker position, into the GeoJSON format
-            geojson = new OpenLayers.Format.GeoJSON({
-                'internalProjection': map.baseLayer.projection,
-                'externalProjection': new OpenLayers.Projection("EPSG:4326")
-                });
-
-            var loc = JSON.parse(geojson.write(incidentLayer.features[0]));
-            }
-        else {
-            alert("Please, we are also need the latitude and longitude coordinates. Click in the Locate in the map button and place a marker near the location of the damage");
-            return
-            }
-    }
-
-    if ($('#other').is(':checked')) {
-        other = 1;
-    }
-
-    if ( (video == 0) && (location==0) && (other==0) && (picture ==0) ) {
-        alert("Please, select one of the categories. If none of the them fits, select Other");
-        return;
-    }
-
-    // Save the task
-    pybossa.saveTask(taskid, answer).done( function( data ) {
-        // Uncoment next line for debugging purposes
-        //console.log("Answer saved!");
-        // FadeIn & Out the success div feedback
-        $("#success").fadeIn();
-        setTimeout(function() { $("#success").fadeOut() }, 2000);
-        // Load a new task
-        //pybossa.newTask(appname).done( function( data ){ loadData( data ) });
-        window.location.pathname = "/app/" + appname + "/newtask";
-    });
-}
-
 pybossa.taskLoaded(function(task, deferred){
         if ( !$.isEmptyObject(task) ) {
             task.map_canvas = $("<div/>", {
@@ -606,7 +446,7 @@ pybossa.taskLoaded(function(task, deferred){
             );
             $("#lon").text(tmp.x);       
             $("#lat").text(tmp.y);       
-            loc = {"lon":tmp.x, "lat":tmp.y};
+            task.loc = {"lon":tmp.x, "lat":tmp.y};
             task.drawControls['point'].deactivate();
             $("#point").addClass("disabled");
         }
@@ -630,7 +470,7 @@ pybossa.taskLoaded(function(task, deferred){
                 // When the marker has been dropped, update the lon & lat of the urban park
                 $("#lon").text(tmp.x);       
                 $("#lat").text(tmp.y);       
-                loc = {"lon":tmp.x, "lat":tmp.y};
+                task.loc = {"lon":tmp.x, "lat":tmp.y};
             }
         
         });
@@ -653,6 +493,7 @@ pybossa.taskLoaded(function(task, deferred){
         // Configure the Categories for this task
         var select = $("<select/>", {'id': "category_" + task.id});
         select.append("<option value='Nan'>Select one Category...</option>");
+        select.append("<option value='dontknow'>I don't know</option>");
         var l = task.info.categories.length;
         for(i=0; i<l; i++) {
             var cat = task.info.categories[i]['category'];
@@ -660,15 +501,17 @@ pybossa.taskLoaded(function(task, deferred){
                 select.append("<option value=" + cat['id'] + ">" + cat['title'] + "</option>");
             }
         }
+        // Add the category I don't know
+        task.info['categories'].push({'category': {'description': "I don't know", 'title': "I don't know", 'color': "0", 'parent_id': "0", 'position': '0', 'id': 'dontknow', 'icon': "" }});
         task.select = select;
+        task.answer = [];
+        task.loc = {'lat': 0, 'lon': 0};
 
         deferred.resolve(task);
         }
         else {
             deferred.resolve(task);
         }
-
-
 });
 
 function show_sub_categories(cat_id, task) {
@@ -677,7 +520,7 @@ function show_sub_categories(cat_id, task) {
     select.append("<option value='Nan'>Select one Sub-Category...</option>");
     for(i=0;i<l;i++) {
         var cat = task.info.categories[i];
-        if ((cat['category']['id'] == cat_id) && (cat['category']['title'] == 'URGENT')){
+        if ((cat['category']['id'] == cat_id) && ((cat['category']['title'] == 'URGENT') || (cat['category']['title'] == "I don't know"))){
             add_cat_subcat(task);
         }
         else if (cat['category']['parent_id'] == cat_id) {
@@ -690,26 +533,26 @@ function show_sub_categories(cat_id, task) {
     task.selectSubCat = select;
 }
 
-function remove_cat_subcat(){
+function remove_cat_subcat(task){
         var item = ($(this).attr('id')).split("QQQ");
         if (item.length == 2) {
             var cat = item[0];
             var sub_cat = item[1];
 
-            var idx = answer[cat]['sub-categories'].indexOf(sub_cat);
-            answer[cat]['sub-categories'].pop(idx);
-            if (answer[cat]['sub-categories'].length == 0) {
-                delete answer[cat];
+            var idx = task.answer[cat]['sub-categories'].indexOf(sub_cat);
+            task.answer[cat]['sub-categories'].pop(idx);
+            if (task.answer[cat]['sub-categories'].length == 0) {
+                delete task.answer[cat];
             }
         }
         else {
             var cat = item[0]
-            delete answer[cat];
+            delete task.answer[cat];
         }
         var id = "p#" + $(this).attr('id');
        $(id).remove();
        $(this).parent().remove();
-       if (Object.keys(answer).length == 0) {
+       if (Object.keys(task.answer).length == 0) {
            $("#catBtn").hide();
        }
 }
@@ -723,15 +566,15 @@ function add_cat_subcat(task) {
     var span = $("<span/>");
     var add_item = false;
 
-    if (cat_id !="Nan") {
+    if (cat_id !="Nan"){
         var l = task.info.categories.length;
         for(i=0;i<l;i++) {
             var cat = task.info.categories[i];
             if (cat['category']['id'] === cat_id) {
                 selected_cat = cat;
-                if (answer.indexOf(cat_id) ==-1) {
+                if (task.answer.indexOf(cat_id) ==-1) {
                     add_item = true;
-                    answer.push(cat_id)
+                    task.answer.push(cat_id)
                 }
                 break;
             }
@@ -741,9 +584,9 @@ function add_cat_subcat(task) {
             var cat = task.info.categories[i];
             if (cat['category']['id'] === sub_cat_id) {
                 selected_sub_cat = cat;
-                if (answer.indexOf(sub_cat_id) ==-1) {
+                if (task.answer.indexOf(sub_cat_id) ==-1) {
                     add_item = true;
-                    answer.push(sub_cat_id)
+                    task.answer.push(sub_cat_id)
                 }
                 break;
             }
@@ -759,14 +602,12 @@ function add_cat_subcat(task) {
                 $("#step2").show();
             });
         }
-        if ((cat_id !="Nan") && (typeof sub_cat_id !="undefined")) {
+        if (((cat_id !="Nan") || (cat_id != "dontknow")) && (typeof sub_cat_id !="undefined")) {
             var id = selected_cat['category']['id'] + "QQQ" + selected_sub_cat['category']['id'];
-            //var id = cat + "QQQ" + sub_cat;
             p.attr('id', id);
             btn.attr('id', id);
             p.append(btn);
             span.html(" <strong>" + selected_cat['category']['title'] + "</strong> &rarr; " + selected_sub_cat['category']['title'] ); 
-            //span.html(" <strong>" + cat + "</strong> &rarr; " + sub_cat ); 
             p.append(span);
         }
         else {
@@ -810,11 +651,11 @@ function reset_forms(task) {
         
     }
     $("#geocoding>#map_task_" + task.id).remove();
-    for (var key in answer) {
-        delete answer[key];
+    for (var key in task.answer) {
+        delete task.answer[key];
     }
     for (var key in loc) {
-        delete loc[key];
+        delete task.loc[key];
     }
 }
 
@@ -884,7 +725,7 @@ pybossa.presentTask(function(task, deferred){
                 }
             });
 
-            answer.length=0;
+            task.answer.length=0;
 
 
             $("#point").off('click').on('click', function(){
@@ -898,7 +739,7 @@ pybossa.presentTask(function(task, deferred){
             $("#dontKnow").off('click').on('click', function(){
                 $("#geoBtn").show();
                 $("#stepbar").css('width', '66%');
-                loc = {"lon": "dontKnow", "lat":"dontKnow"};
+                task.loc = {"lon": "dontKnow", "lat":"dontKnow"};
             });
 
 
@@ -937,12 +778,6 @@ pybossa.presentTask(function(task, deferred){
                 show_sub_categories(cat, task);
                 $("#categories").append(task.selectSubCat);
             });
-            // Add category and sub-category to the possible answers list
-            //$("select#subcategories_" + task.id).change(function(){
-            //    console.log("Hoal");
-            //    var sub_cat = $(this).children(":selected").val();
-            //    add_cat_subcat(task);
-            //});
 
             $("#geoBtn").off('click').on('click', function(){
                 $("#stepbar").css("width", "100%");
@@ -950,18 +785,18 @@ pybossa.presentTask(function(task, deferred){
                 $("#step2").hide();
                 $("#step3").show();
 
-             var l_a = answer.length;
+             var l_a = task.answer.length;
              var l = task.info.categories.length;
 
             for(i=0;i<l_a;i++){
                 for(j=0;j<l;j++) {
                     var cat = task.info.categories[j];
-                    if( (cat['category']['id'] == answer[i]) && (cat['category']['parent_id']==0) ){
-                        var li = $("<li/>", {id: "cat_" + answer[i], text: cat['category']['title']});
+                    if( (cat['category']['id'] == task.answer[i]) && (cat['category']['parent_id']==0) ){
+                        var li = $("<li/>", {id: "cat_" + task.answer[i], text: cat['category']['title']});
                         $("#review").append(li)
                         break;
                     }
-                    if( (cat['category']['id'] == answer[i]) && (cat['category']['parent_id']!=0) ){
+                    if( (cat['category']['id'] == task.answer[i]) && (cat['category']['parent_id']!=0) ){
                         var ul = $("<ul/>");
                         ul.append("<li>" + cat['category']['title'] +"</li>");
                         $("#review").append(ul);
@@ -971,15 +806,15 @@ pybossa.presentTask(function(task, deferred){
             }
                 
 
-                if (Object.keys(loc).length > 0) {
-                    $("#reviewLoc").append("<p><strong>Incident Latitude:</strong> " + loc['lat'] + "</p>");
-                    $("#reviewLoc").append("<p><strong>Incident Longitude: </strong>" + loc['lon'] + "</p>");
+                if (Object.keys(task.loc).length > 0) {
+                    $("#reviewLoc").append("<p><strong>Incident Latitude:</strong> " + task.loc['lat'] + "</p>");
+                    $("#reviewLoc").append("<p><strong>Incident Longitude: </strong>" + task.loc['lon'] + "</p>");
                 }
             });
 
             // Enable the submit button in the final step
             $('.btn-submit').off('click').on('click', function(evt){
-                if (Object.keys(answer).length != 0) {
+                if (Object.keys(task.answer).length != 0) {
                     // Create a line with all the categories and subcategories
                     var incident_answer = {
                         'id': task.info.incident.id,
@@ -987,14 +822,13 @@ pybossa.presentTask(function(task, deferred){
                         'date': task.info.incident.date,
                         'location': $("#locationRef").val(),
                         'description': task.info.incident.description,
-                        'category': answer,
-                        'latitude': loc['lat'],
-                        'longitude': loc['lon'],
+                        'category': task.answer,
+                        'latitude': task.loc['lat'],
+                        'longitude': task.loc['lon'],
                         'approved': task.info.incident.approved,
                         'verified': task.info.incident.verified
                     };
                     pybossa.saveTask(task.id, incident_answer).done(function(){
-                        console.log(incident_answer);
                         reset_forms(task);
                         deferred.resolve();
                     });
