@@ -533,28 +533,34 @@ function show_sub_categories(cat_id, task) {
     task.selectSubCat = select;
 }
 
-function remove_cat_subcat(task){
-        var item = ($(this).attr('id')).split("QQQ");
-        if (item.length == 2) {
-            var cat = item[0];
-            var sub_cat = item[1];
+function remove_cat_subcat(item, task){
+        var tmp = item.attr('id').split("QQQ");
+        if ((tmp[0] != "") && (tmp[1]!= "")) {
+            var cat = tmp[0];
+            var sub_cat = tmp[1];
 
-            var idx = task.answer[cat]['sub-categories'].indexOf(sub_cat);
-            task.answer[cat]['sub-categories'].pop(idx);
-            if (task.answer[cat]['sub-categories'].length == 0) {
-                delete task.answer[cat];
+            var idx = task.answer.indexOf(cat);
+            if (idx != -1) {
+                task.answer.splice(idx,1);
+            }
+            var idx = task.answer.indexOf(sub_cat);
+            if (idx != -1) {
+                task.answer.splice(idx, 1);
             }
         }
         else {
-            var cat = item[0]
-            delete task.answer[cat];
+            var idx = task.answer.indexOf(tmp[0]);
+            if (idx != -1) {
+                task.answer.splice(idx, 1);
+            }
         }
-        var id = "p#" + $(this).attr('id');
+       var id = "p#" + item.attr('id');
        $(id).remove();
-       $(this).parent().remove();
+       item.parent().remove();
        if (Object.keys(task.answer).length == 0) {
            $("#catBtn").hide();
        }
+       console.log(task.answer);
 }
 
 function add_cat_subcat(task) {
@@ -575,6 +581,7 @@ function add_cat_subcat(task) {
                 if (task.answer.indexOf(cat_id) ==-1) {
                     add_item = true;
                     task.answer.push(cat_id)
+                    console.log(task.answer);
                 }
                 break;
             }
@@ -587,6 +594,7 @@ function add_cat_subcat(task) {
                 if (task.answer.indexOf(sub_cat_id) ==-1) {
                     add_item = true;
                     task.answer.push(sub_cat_id)
+                    console.log(task.answer);
                 }
                 break;
             }
@@ -621,7 +629,9 @@ function add_cat_subcat(task) {
             p.append(span);
         }
     $("#answers").append(p);
-    btn.click(remove_cat_subcat);
+    btn.click(function(){
+        var item = $(this);
+        remove_cat_subcat(item, task);});
     $("#stepbar").css('width', '33%');
     }
 }
