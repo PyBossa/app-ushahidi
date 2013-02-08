@@ -130,6 +130,9 @@
                     <button id="point"    class="btn btn-inverse">
                         <i class="icon icon-white icon-map-marker"></i> Add a marker 
                     </button>
+                    <button id="pointRemove"    class="btn btn-inverse" style="display:none">
+                        <i class="icon icon-white icon-map-marker"></i> Delete the marker 
+                    </button>
                     <button id="dontKnow"    class="btn btn-inverse">
                          <i class="icon-question-sign"></i> I don't know
                     </button>
@@ -432,6 +435,7 @@ pybossa.taskLoaded(function(task, deferred){
             attribution: 'Marker Icons by <a href="http://mapicons.nicolasmollet.com/">Nicolas Mollet</a>'
         });
         task.map.addLayer(incidentLayer);
+        task.incidentLayer = incidentLayer;
 
         // Function to allow only the addition of one damage/impact marker per tweet 
         // The function gets the feature (point) and gets its location, transforms it to the right projection
@@ -741,8 +745,26 @@ pybossa.presentTask(function(task, deferred){
                     task.drawControls['point'].activate();
                     $("#navigate").addClass("active");
                     $("#point").addClass("disabled");
+                    $("#pointRemove").show();
+                    $("#point").hide();
+                    $("#dontKnow").hide();
                 }
             });
+
+            $("#pointRemove").off('click').on('click', function(){
+                if ($("#point").hasClass("disabled")) {
+                    $("#point").removeClass("disabled");
+                    task.incidentLayer.removeAllFeatures();
+                    task.loc['lat'] = "-";
+                    task.loc['lon'] = "-";
+                    $("#lat").text("-");
+                    $("#lon").text("-");
+                    $("#pointRemove").hide();
+                    $("#point").show();
+                    $("#dontKnow").show();
+                }
+            });
+
 
             $("#dontKnow").off('click').on('click', function(){
                 $("#geoBtn").show();
