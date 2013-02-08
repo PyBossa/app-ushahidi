@@ -92,7 +92,7 @@
         <h3><i class="icon-bullhorn"></i> Tip: You can add as many categories as you want!</h3>
         <div id="categories"></div>
   </div>
-  <div class="span6" style="border-left: 1px, solid;">
+  <div class="span6">
       <h2>Your chosen categories</h2>
       <div id="answers" class="well well-small"></div>
       <button id="catBtn" class="btn btn-primary" style="display:none">Done! Go to Step 2</button>
@@ -101,26 +101,29 @@
 
 <div id="step2" class="row skeleton" style="display:none">
     <div class="span12">
-        <h3 class="noLocation" style="display:none">Step 2: Place the report in the map</h3>
-        <h3 class="withLocation" style="display:none">Step 2: Validate/Improve the location of the report</h3>
-        <span class="label label-info withLocation"><i class="icon-bullhorn"></i> Tip:</span> Enable/disable the satellite layer to get more information.
+        <h2 class="noLocation" style="display:none"><strong>Step 2</strong>: Place the report in the map</h2>
+        <h2 class="withLocation" style="display:none"><strong>Step 2</strong>: Validate/Improve the location of the report</h2>
+        <h3><span class="withLocation"><i class="icon-bullhorn"></i> Tip:</span> By clicking in the map icon <img src="http://cdnjs.cloudflare.com/ajax/libs/openlayers/2.11/img/layer-switcher-maximize.png"></img> you can use Google or Open Street Maps</h3>
         <div class="row">
             <div class="span8">
-                <div class="withLocation">
-                    <i class='icon-globe'></i> Location: <span id="withLocation"></span><br/>
-                    <i class='icon-map-marker'></i> Coordinates:  Lon <span id="withLongitude"></span> Lat <span id="withLatitude"></span> 
+                <div class="withLocation well well-small" style="margin-top:5px">
+                    <h3><i class="icon-globe"></i> <strong>Report information</strong></h3>
+                    <ul style="list-style-type: none">
+                        <li><i class='icon-map-marker'></i> <strong>Location</strong>: <span id="withLocation"></span><br/>
+                        <li><i class='icon-map-marker'></i> <strong>Coordinates</strong>:  Lon <span id="withLongitude"></span> Lat <span id="withLatitude"></span> 
+                    </ul>
                 </div>
                 <div id="geocoding"></div>
             </div>
             <div class="span4">
-                <div class="input-append">
-                    <label for="locationRef">Search for Street, City, or Country</label>
-                    <input id="locationRef" class="span4" type="text" placeholder="Street, City, Country">
+                <div class="input-append" style="margin-top:5px;">
+                    <label for="locationRef"><strong>Search for Street, City, Country</strong></label>
+                    <input id="locationRef" class="span4" type="text">
                     <button class="btn" type="button" id="searchBtn"><i class="icon-search"></i> Search!</button>
                 </div>
                 <div class="input-append">
-                    <label for="lonLatRef">Or Longitude and Latitude</label>
-                    <input id="lonLatRef" class="span4" type="text" placeholder="Longitude, Latitude">
+                    <label for="lonLatRef"><strong>Or Longitude and Latitude separated by commas</strong></label>
+                    <input id="lonLatRef" class="span4" type="text" placeholder="">
                     <button class="btn" type="button" id="searchLonLat"><i class="icon-search"></i> Search!</button>
                 </div>
                 <div id="controls" style="margin-top:5px;">
@@ -754,7 +757,7 @@ pybossa.presentTask(function(task, deferred){
                 $("#incident>#location").html(task.info.incident.location);
                 $(".withLocation").show();
                 $("#withLocation").html(task.info.incident.location);
-                $("#locationRef").val(task.info.incident.location);
+                //$("#locationRef").val(task.info.incident.location);
             }
             else {
                 $(".noLocation").show();
