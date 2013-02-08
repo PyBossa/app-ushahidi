@@ -5,14 +5,13 @@ This pybossa application allows you to categorize, and add/improve the
 geo-localization of the collected reports in an Ushahidi server, using a simple
 web interface.
 
-Some screenshots of the application:
-![http://i.imgur.com/6E63EkQ.png]
+![](http://i.imgur.com/6E63EkQ.png)
 
 Categorizing the incident:
-![http://i.imgur.com/VDFYkvt.png]
+![](http://i.imgur.com/VDFYkvt.png)
 
 Geolocating the incident:
-![http://i.imgur.com/UqBUqIu.png]
+![](http://i.imgur.com/UqBUqIu.png)
 
 ## Setting the application
 
