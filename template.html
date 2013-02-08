@@ -86,11 +86,15 @@
 </div>
 
 <div id="step1" class="row skeleton">
-    <div class="span12">
         <hr>
-        <h3>Step 1: Categorize the report <small>add as many categories as you need</small></h3>
-      <div id="categories"></div>
-      <div id="answers"></div>
+    <div class="span6">
+        <h1><strong>Step 1</strong>: Categorize the report</h1>
+        <h3><i class="icon-bullhorn"></i> Tip: You can add as many categories as you want!</h3>
+        <div id="categories"></div>
+  </div>
+  <div class="span6" style="border-left: 1px, solid;">
+      <h2>Your chosen categories</h2>
+      <div id="answers" class="well well-small"></div>
       <button id="catBtn" class="btn btn-primary" style="display:none">Done! Go to Step 2</button>
   </div>
 </div>
@@ -183,7 +187,6 @@ var categories = [];
 
 function registerEvents(layer, task, deferred) {
     layer.events.register("loadend", layer, function() {
-                console.log("Load End. Grid:" + this.grid.length + "x" + this.grid[0].length);
                 deferred.resolve(task);
             });
 }
@@ -205,8 +208,6 @@ function center_map(map, lon, lat) {
             layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
         }
     }
-    //layer.addFeatures([new OpenLayers.Feature.Vector(point)]);
-    //console.log(map.div);
     map.setCenter(lonLat, 18);
 }
 
@@ -281,7 +282,6 @@ function search(map, city, zoom) {
     // Geocode the place using Nominatim OSM service
     $.getJSON('http://nominatim.openstreetmap.org/search/' + place + '?format=json', function(output) {
         if (output.length >= 1) {
-            //console.log("Lon: "+ output[0].lon + " Lat: " + output[0].lat);
             // Clean previous markers
             if (place != 'kenya') {
                 $("#locationRef").val(output[0].display_name);
@@ -291,7 +291,6 @@ function search(map, city, zoom) {
             $("#point").removeClass("active");
             $("#answerbtn").addClass("disabled");
             $("#answerbtn").unbind('click',submitTask);
-            //console.log("Map cleaned!");
             // Create a LonLat object to load the place marker
             var lonLat = new OpenLayers.LonLat(output[0].lon, output[0].lat)
                 .transform(
@@ -302,7 +301,6 @@ function search(map, city, zoom) {
             point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
             //cityLayer.addFeatures([new OpenLayers.Feature.Vector(point)]);
             // Center the map
-            console.log(zoom);
             map.setCenter(lonLat, zoom);
             //lonLat.transform(
             //        map.getProjectionObject(), // from Spherical Mercator Projection
@@ -560,7 +558,6 @@ function remove_cat_subcat(item, task){
        if (Object.keys(task.answer).length == 0) {
            $("#catBtn").hide();
        }
-       console.log(task.answer);
 }
 
 function add_cat_subcat(task) {
@@ -581,7 +578,6 @@ function add_cat_subcat(task) {
                 if (task.answer.indexOf(cat_id) ==-1) {
                     add_item = true;
                     task.answer.push(cat_id)
-                    console.log(task.answer);
                 }
                 break;
             }
@@ -594,7 +590,6 @@ function add_cat_subcat(task) {
                 if (task.answer.indexOf(sub_cat_id) ==-1) {
                     add_item = true;
                     task.answer.push(sub_cat_id)
-                    console.log(task.answer);
                 }
                 break;
             }
