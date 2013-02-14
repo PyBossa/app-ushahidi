@@ -685,6 +685,8 @@ pybossa.presentTask(function(task, deferred){
             $("#step1").show();
             $("#step2").hide();
             $("#step3").hide();
+            $("#point").show();
+            $("#pointRemove").hide();
             $("#question h1").text(task.info.question);
             $("#task-id").text(task.id);
             $("#incident>#title").html(task.info.incident.title);
