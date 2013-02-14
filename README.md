@@ -1,7 +1,7 @@
 PyBossa application for categorizing Usahidi reports
 ====================================================
 
-This pybossa application allows you to categorize, and add/improve the
+This PyBossa application allows you to categorize, and add/improve the
 geo-localization of the collected reports in an Ushahidi server, using a simple
 web interface.
 
@@ -37,15 +37,15 @@ simple and not interfering with other libraries in your system.
 
 Hence, the steps for installing the dependencies using a virtualenv will be:
 
-    1.- Clone this repository or download the [ZIP file](https://github.com/PyBossa/app-ushahidi/archive/master.zip)
-    2.- Access the folder that you have created by cloning the repository or by
-    unzipping the ZIP file.
-    3.- Run the following command to create the virtualenv: virtualenv env
-    4.- The previous command will create a folder **env** with all the required
-    libraries, now we need to activate this environment: . env/bin/activate
-    5.- You should see in the promt that a **(env)** string is attached to it,
-    something like: **(env)**username@machinename:~/app-ushahidi
-    6.- Now you can install the dependencies for the application: pip install -r requirements.txt
+1. Clone this repository or download the [ZIP file](https://github.com/PyBossa/app-ushahidi/archive/master.zip)
+2. Access the folder that you have created by cloning the repository or by
+unzipping the ZIP file.
+3. Run the following command to create the virtualenv: virtualenv env
+4. The previous command will create a folder **env** with all the required
+libraries, now we need to activate this environment: . env/bin/activate
+5. You should see in the prompt that a **(env)** string is attached to it,
+something like: **(env)**username@machinename:~/app-ushahidi
+6. Now you can install the dependencies for the application: pip install -r requirements.txt
 
 Now you are done! All you have to do now is using it :-)
 
@@ -62,11 +62,10 @@ PyBossa application.
 All you have to do is to run the following command:
 
 ```bash
-    python createTasks.py -s SERVER -k API_KEY -c --data CSV_FILE --usahidi-server
-USHAHIDI
+python createTasks.py -s SERVER -k API_KEY -c --data CSV_FILE --usahidi-server USHAHIDI
 ```
 
-**NOTE**: You need to specify thhe Ushahidi server from where you obtained the
+**NOTE**: You need to specify the Ushahidi server from where you obtained the
 CSV file with the reports, because the Categories and sub-categories will be gathered 
 from that server, so you don't have to add them manually.
 
@@ -86,10 +85,10 @@ If you need to add more incidents to categorize, all you have to do is to get
 the new set of incidents in a new CSV file and run the following command:
 
 ```bash
-    python createTasks.py -s SERVER -k API_KEY -x --data ushahidi.csv --ushahidi-server USHAHIDI
+python createTasks.py -s SERVER -k API_KEY -x --data ushahidi.csv --ushahidi-server USHAHIDI
 ```
 
-This will add new tasks to the server, and will be inmediately avaiable for the
+This will add new tasks to the server, and will be immediately available for the
 users.
 
 ### Updating the tutorial and description of the application
@@ -103,7 +102,7 @@ you only need to edit the next two files:
 Then, run the next command:
 
 ```
-    python createTasks.py -s SERVER -k API_KEY -t
+python createTasks.py -s SERVER -k API_KEY -t
 ```
 
 ## Categorizing the incident reports
@@ -114,18 +113,16 @@ application): http://PYBOSSA-SERVER/app/ushahidi
 
 The application has three simple steps:
 
-1.- Add one or more categories (and its associated sub-categories) for the
+1. Add one or more categories (and its associated sub-categories) for the
 report. The user can add as many as he wants, and in case of an error, he can
 delete them before proceeding to the next step.
-
-2.- If the report has been already geo-localized, the application will ask the
+2. If the report has been already geo-localized, the application will ask the
 user if he can improve the location. The user will see a web map with the
 current location marked by the report, and the user will be able to improve the
 location by placing a new marker where he thinks it is the right location. If
 the report does not have a location, the user will have to find it and place it
 in the map with a marker.
-
-3.- Once the step 1 and two are completed, the user will see a summary of his
+3. Once the step 1 and two are completed, the user will see a summary of his
 categorization before submitting it. If he agrees with it, the user will be
 able to submit the categorization by clicking in the button: Submit! Then a new
 report will be loaded for the user.
@@ -135,16 +132,16 @@ report will be loaded for the user.
 The PyBossa-Ushahidi application has two ways of exporting the data out of the
 PyBossa servers:
 
-1.- CSV file
-2.- Directly back to the Ushahidi server
+1. CSV file
+2. Directly back to the Ushahidi server
 
 The application has been designed in a way that both methods can be used at the
 same time, or just the CSV exporting file facility.
 
 The application has two apps that will be able to extract the data:
 
-1.- getResults.py: this app exports the data into a CSV file
-2.- export.py: this daemon/service app automatically exports data to a CSV file
+1. getResults.py: this app exports the data into a CSV file
+2. export.py: this daemon/service app automatically exports data to a CSV file
 and to the Ushahidi server of your choice.
 
 Additionally, both applications can be tuned to export all the data (raw data),
@@ -158,7 +155,7 @@ latitude and longitude values.
 This application is really simple to use, just run it like this:
 
 ```bash
-    python getResults.py -s PYBOSSA -k API-KEY -r
+python getResults.py -s PYBOSSA -k API-KEY -r
 ```
 
 And you will get all the results, even for not completed tasks, written to the 
@@ -166,14 +163,14 @@ file **results.csv**. If you only want the completed tasks, run it with this
 argument:
 
 ```bash
-    python getResults.py -s PYBOSSA -k API-KEY -c -r
+python getResults.py -s PYBOSSA -k API-KEY -c -r
 ```
 
 And if you want to compute the canonical results (this will be done only for
 completed tasks):
 
 ```bash
-    python getResults.py -s PYBOSSA -k API-KEY -c -a
+python getResults.py -s PYBOSSA -k API-KEY -c -a
 ```
 
 While this application is useful, you will need to run it by hand (or using
@@ -187,7 +184,7 @@ by using the -f argument.
 
 **NOTE**: You will need also to install the [mongoDB server](http://www.mongodb.org/)
 if you want to use this method, as the application keeps a record of which tasks have 
-been already saved, in order to save bandwith and not overload the PyBossa
+been already saved, in order to save bandwidth and not overload the PyBossa
 server.
 
 This application is a [service/daemon](http://en.wikipedia.org/wiki/Daemon_%28computing%29) 
@@ -199,7 +196,7 @@ The application has the same arguments as the previous one, but this
 application can be started and stopped as a server:
 
 ```bash
-    python export.py --start -s PYBOSSA -k API-KEY -c -a
+python export.py --start -s PYBOSSA -k API-KEY -c -a
 ```
 
 This will run every 5 minutes (the polling time can be changed using the -p
