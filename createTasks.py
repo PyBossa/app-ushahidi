@@ -27,7 +27,8 @@ def get_categories(url):
     """Gets Ushahidi categories from the server"""
     url = url + "/api?task=categories"
     r = requests.get(url)
-    categories = r.json['payload']['categories']
+    data = r.json()
+    categories = data['payload']['categories']
     return categories
 
 def task_formatter(app_config, row, n_answers, categories):
@@ -140,7 +141,7 @@ if __name__ == "__main__":
     else:
         pbclient.set('api_key', options.api_key)
 
-    if not options.ushahidi_server:
+    if (options.create_app or options.add_more_tasks) and not options.ushahidi_server:
         parser.error("You must supply the Ushahidi server from where you want \
                      to categorize the reports")
 
@@ -190,6 +191,7 @@ if __name__ == "__main__":
     else:
         app = pbclient.find_app(short_name=app_config['short_name'])[0]
         if options.add_more_tasks:
+            categories = get_categories(options.ushahidi_server)
             import csv
             if not options.csv_file:
                 options.csv_file = 'ushahidi.csv'
@@ -209,16 +211,19 @@ if __name__ == "__main__":
                 for row in csvreader:
                     if row[0] != 'tweetid':
                         task_info = task_formatter(app_config, row,
-                                                   options.n_answers)
+                                                   options.n_answers,
+                                                   categories)
                         pbclient.create_task(app.id, task_info)
 
     if options.update_template:
-        print "Updating app template"
+        print "Updating app tutorial, description and task presenter..."
         app = pbclient.find_app(short_name=app_config['short_name'])[0]
         app.long_description = open('long_description.html').read()
         app.info['task_presenter'] = open('template.html').read()
         app.info['tutorial'] = open('tutorial.html').read()
+        app.info['thumbnail'] = app_config['thumbnail']
         pbclient.update_app(app)
+        print "Done!"
 
     if options.update_tasks:
         print "Updating task n_answers"

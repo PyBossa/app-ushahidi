@@ -135,7 +135,7 @@ if __name__ == "__main__":
         limit = 100
 
         app = pbclient.find_app(short_name=app_config['short_name'])[0]
-        if options.completed:
+        if options.completed or options.average:
             completed_tasks = pbclient.find_tasks(app.id,
                                                   state="completed",
                                                   offset=offset,

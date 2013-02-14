@@ -153,7 +153,7 @@ class my_daemon(Daemon):
             csv_file_name = "/tmp/results.csv"
 
 
-        if (self.options.results):
+        if (self.options.results or self.options.completed or self.options.average):
             app = pbclient.find_app(short_name=app_config['short_name'])[0]
 
         # Connect to the server

@@ -1,7 +1,7 @@
 {
     "name": "Ushahidi",
     "short_name": "ushahidi",
-    "thumbnail": "http://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Applications-internet_Gion.svg/200px-Applications-internet_Gion.svg.png"
+    "thumbnail": "http://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Applications-internet_Gion.svg/200px-Applications-internet_Gion.svg.png",
     "description": "TEST Classifying Ushahidi reports",
     "question": "Please select a category and location that best describes the following report"
 }
